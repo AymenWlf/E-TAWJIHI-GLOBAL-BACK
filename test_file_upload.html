@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File Upload</title>
+</head>
+<body>
+    <h1>Test File Upload</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div>
+            <label for="file">Select File:</label>
+            <input type="file" id="file" name="file" required>
+        </div>
+        <div>
+            <label for="type">Type:</label>
+            <input type="text" id="type" name="type" value="passport" required>
+        </div>
+        <div>
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" value="identity" required>
+        </div>
+        <div>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="Test Document" required>
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description">Test upload</textarea>
+        </div>
+        <button type="submit">Upload</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('file');
+            const typeInput = document.getElementById('type');
+            const categoryInput = document.getElementById('category');
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            
+            formData.append('file', fileInput.files[0]);
+            formData.append('type', typeInput.value);
+            formData.append('category', categoryInput.value);
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value);
+            
+            try {
+                const response = await fetch('/api/profile/documents', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer YOUR_JWT_TOKEN_HERE'
+                    }
+                });
+                
+                const result = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        });
+    </script>
+</body>
+</html>

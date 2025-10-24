@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Document Download/View with Original Filename</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .document-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Document Download/View with Original Filename</h1>
+        
+        <div class="info">
+            <strong>📋 Instructions:</strong><br>
+            1. Entrez votre token JWT<br>
+            2. Cliquez sur "Get Documents" pour récupérer la liste<br>
+            3. Sélectionnez un document et testez le téléchargement/visualisation<br>
+            4. Vérifiez que le fichier téléchargé a le bon nom et extension
+        </div>
+
+        <div class="form-group">
+            <label for="jwtToken">JWT Token:</label>
+            <textarea id="jwtToken" rows="3" placeholder="Entrez votre token JWT ici..."></textarea>
+        </div>
+
+        <button onclick="getDocuments()">📄 Get Documents</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+
+        <div id="results"></div>
+
+        <div class="test-section">
+            <h3>📊 Document List</h3>
+            <div id="documentList"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📥 Test Download/View</h3>
+            <div class="form-group">
+                <label for="documentId">Document ID:</label>
+                <input type="number" id="documentId" placeholder="Entrez l'ID du document">
+            </div>
+            <button onclick="testDownload()">⬇️ Test Download</button>
+            <button onclick="testView()">👁️ Test View</button>
+            <div id="downloadResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/profile';
+        let documents = [];
+
+        function getJWTToken() {
+            const token = document.getElementById('jwtToken').value.trim();
+            if (!token) {
+                alert('Veuillez entrer un token JWT');
+                return null;
+            }
+            return token;
+        }
+
+        async function getDocuments() {
+            const token = getJWTToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                documents = await response.json();
+                displayDocuments(documents);
+                
+                document.getElementById('results').innerHTML = `
+                    <div class="success">
+                        ✅ ${documents.length} document(s) récupéré(s) avec succès
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `
+                    <div class="error">
+                        ❌ Erreur lors de la récupération des documents: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayDocuments(docs) {
+            const container = document.getElementById('documentList');
+            
+            if (docs.length === 0) {
+                container.innerHTML = '<p>Aucun document trouvé.</p>';
+                return;
+            }
+
+            let html = '<div style="display: grid; gap: 10px;">';
+            docs.forEach(doc => {
+                html += `
+                    <div class="document-info">
+                        <strong>📄 ${doc.title}</strong><br>
+                        <small>
+                            ID: ${doc.id} | 
+                            Type: ${doc.type} | 
+                            Catégorie: ${doc.category}<br>
+                            Nom original: <code>${doc.originalFilename}</code><br>
+                            Nom fichier: <code>${doc.filename}</code><br>
+                            Type MIME: <code>${doc.mimeType}</code><br>
+                            Taille: ${doc.fileSizeFormatted}<br>
+                            Statut: ${doc.status} | 
+                            Validation: ${doc.validationStatus || 'N/A'}
+                        </small>
+                        <br>
+                        <button onclick="selectDocument(${doc.id})" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">
+                            Sélectionner
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function selectDocument(id) {
+            document.getElementById('documentId').value = id;
+        }
+
+        async function testDownload() {
+            const token = getJWTToken();
+            const docId = document.getElementById('documentId').value;
+            
+            if (!token || !docId) {
+                alert('Veuillez entrer un token JWT et un ID de document');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${docId}/download`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Récupérer le nom de fichier depuis les headers
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `document-${docId}`;
+                
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Créer le blob et télécharger
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                document.getElementById('downloadResults').innerHTML = `
+                    <div class="success">
+                        ✅ Téléchargement réussi!<br>
+                        Nom de fichier: <code>${filename}</code><br>
+                        Taille: ${blob.size} bytes<br>
+                        Type: ${blob.type}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('downloadResults').innerHTML = `
+                    <div class="error">
+                        ❌ Erreur lors du téléchargement: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testView() {
+            const token = getJWTToken();
+            const docId = document.getElementById('documentId').value;
+            
+            if (!token || !docId) {
+                alert('Veuillez entrer un token JWT et un ID de document');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${docId}/view`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Récupérer le nom de fichier depuis les headers
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `document-${docId}`;
+                
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Créer le blob et ouvrir dans un nouvel onglet
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                
+                // Nettoyer l'URL après un délai
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
+                document.getElementById('downloadResults').innerHTML = `
+                    <div class="success">
+                        ✅ Visualisation ouverte dans un nouvel onglet!<br>
+                        Nom de fichier: <code>${filename}</code><br>
+                        Taille: ${blob.size} bytes<br>
+                        Type: ${blob.type}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('downloadResults').innerHTML = `
+                    <div class="error">
+                        ❌ Erreur lors de la visualisation: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('documentList').innerHTML = '';
+            document.getElementById('downloadResults').innerHTML = '';
+            documents = [];
+        }
+    </script>
+</body>
+</html>

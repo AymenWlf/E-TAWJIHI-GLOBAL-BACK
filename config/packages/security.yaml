@@ -35,6 +35,11 @@ security:
   access_control:
     - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
     - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+    - { path: ^/api/establishments, roles: PUBLIC_ACCESS }
+    - { path: ^/api/programs, roles: PUBLIC_ACCESS }
+    - { path: ^/api/program-requirements/types, roles: PUBLIC_ACCESS }
+    - { path: ^/api/program-requirements/program, roles: PUBLIC_ACCESS }
+    - { path: ^/api/public/parameters, roles: PUBLIC_ACCESS }
     - { path: ^/api, roles: ROLE_USER }
 
 when@test:

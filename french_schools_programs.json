@@ -1,0 +1,788 @@
+{
+  "programs": [
+    {
+      "name": "Master in Management (Grande École)",
+      "nameFr": "Master in Management (Grande École)",
+      "description": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le Master in Management d'EM Lyon est un programme de référence qui forme les futurs leaders du monde des affaires. Ce programme de 2 ans combine excellence académique, expérience internationale et développement personnel pour préparer les étudiants aux défis du management moderne.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Triple accréditation AACSB, EQUIS, AMBA</li>\n      <li>• 18 mois d'expérience internationale obligatoire</li>\n      <li>• 95% des diplômés trouvent un emploi en 3 mois</li>\n      <li>• Réseau de 40 000 anciens élèves</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Consulting et audit</li>\n      <li>• Finance et banque d'investissement</li>\n      <li>• Marketing et communication</li>\n      <li>• Entrepreneuriat et innovation</li>\n    </ul>\n  </div>\n</div>\n\n<h3 class=\"text-xl font-bold text-gray-900 mb-3\">Structure du programme</h3>\n<p class=\"text-gray-700 leading-relaxed mb-4\">Le programme s'articule autour de 3 piliers : fondamentaux du management, spécialisation sectorielle, et expérience professionnelle. Les étudiants bénéficient d'un accompagnement personnalisé et d'un accès privilégié aux entreprises partenaires.</p>\n\n<div class=\"bg-gray-50 p-4 rounded-lg\">\n  <h4 class=\"font-semibold text-gray-900 mb-2\">Résultats d'apprentissage clés</h4>\n  <ul class=\"text-gray-700 space-y-1 text-sm\">\n    <li>• Maîtriser les fondamentaux du management stratégique</li>\n    <li>• Développer un leadership responsable et éthique</li>\n    <li>• Acquérir une vision internationale des affaires</li>\n    <li>• Construire un réseau professionnel solide</li>\n    <li>• Développer l'esprit d'innovation et d'entrepreneuriat</li>\n  </ul>\n</div>\n</div>",
+      "descriptionFr": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le Master in Management d'EM Lyon est un programme de référence qui forme les futurs leaders du monde des affaires. Ce programme de 2 ans combine excellence académique, expérience internationale et développement personnel pour préparer les étudiants aux défis du management moderne.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Triple accréditation AACSB, EQUIS, AMBA</li>\n      <li>• 18 mois d'expérience internationale obligatoire</li>\n      <li>• 95% des diplômés trouvent un emploi en 3 mois</li>\n      <li>• Réseau de 40 000 anciens élèves</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Consulting et audit</li>\n      <li>• Finance et banque d'investissement</li>\n      <li>• Marketing et communication</li>\n      <li>• Entrepreneuriat et innovation</li>\n    </ul>\n  </div>\n</div>\n\n<h3 class=\"text-xl font-bold text-gray-900 mb-3\">Structure du programme</h3>\n<p class=\"text-gray-700 leading-relaxed mb-4\">Le programme s'articule autour de 3 piliers : fondamentaux du management, spécialisation sectorielle, et expérience professionnelle. Les étudiants bénéficient d'un accompagnement personnalisé et d'un accès privilégié aux entreprises partenaires.</p>\n\n<div class=\"bg-gray-50 p-4 rounded-lg\">\n  <h4 class=\"font-semibold text-gray-900 mb-2\">Résultats d'apprentissage clés</h4>\n  <ul class=\"text-gray-700 space-y-1 text-sm\">\n    <li>• Maîtriser les fondamentaux du management stratégique</li>\n    <li>• Développer un leadership responsable et éthique</li>\n    <li>• Acquérir une vision internationale des affaires</li>\n    <li>• Construire un réseau professionnel solide</li>\n    <li>• Développer l'esprit d'innovation et d'entrepreneuriat</li>\n  </ul>\n</div>\n</div>",
+      "curriculum": {
+        "coreCourses": [
+          {
+            "name": "Strategic Management",
+            "nameFr": "Management Stratégique",
+            "credits": 6,
+            "description": "Fundamentals of strategic thinking and business planning",
+            "descriptionFr": "Fondamentaux de la pensée stratégique et de la planification d'entreprise"
+          },
+          {
+            "name": "Financial Management",
+            "nameFr": "Gestion Financière",
+            "credits": 6,
+            "description": "Corporate finance, investment analysis, and risk management",
+            "descriptionFr": "Finance d'entreprise, analyse d'investissement et gestion des risques"
+          },
+          {
+            "name": "Marketing Management",
+            "nameFr": "Management Marketing",
+            "credits": 6,
+            "description": "Marketing strategy, consumer behavior, and brand management",
+            "descriptionFr": "Stratégie marketing, comportement du consommateur et gestion de marque"
+          },
+          {
+            "name": "Operations Management",
+            "nameFr": "Management des Opérations",
+            "credits": 4,
+            "description": "Supply chain, quality management, and process optimization",
+            "descriptionFr": "Chaîne d'approvisionnement, gestion de la qualité et optimisation des processus"
+          },
+          {
+            "name": "Leadership and Ethics",
+            "nameFr": "Leadership et Éthique",
+            "credits": 4,
+            "description": "Leadership development and ethical decision making",
+            "descriptionFr": "Développement du leadership et prise de décision éthique"
+          },
+          {
+            "name": "International Business",
+            "nameFr": "Commerce International",
+            "credits": 4,
+            "description": "Global markets, cross-cultural management, and international strategy",
+            "descriptionFr": "Marchés mondiaux, management interculturel et stratégie internationale"
+          }
+        ],
+        "electiveCourses": [
+          {
+            "name": "Digital Transformation",
+            "nameFr": "Transformation Digitale",
+            "credits": 3,
+            "description": "Digital strategy, innovation, and technology management",
+            "descriptionFr": "Stratégie digitale, innovation et management technologique"
+          },
+          {
+            "name": "Entrepreneurship",
+            "nameFr": "Entrepreneuriat",
+            "credits": 3,
+            "description": "Business creation, startup management, and venture capital",
+            "descriptionFr": "Création d'entreprise, management de startup et capital-risque"
+          },
+          {
+            "name": "Sustainability Management",
+            "nameFr": "Management Durable",
+            "credits": 3,
+            "description": "Corporate social responsibility and sustainable business practices",
+            "descriptionFr": "Responsabilité sociale d'entreprise et pratiques commerciales durables"
+          },
+          {
+            "name": "Data Analytics",
+            "nameFr": "Analyse de Données",
+            "credits": 3,
+            "description": "Business intelligence, data visualization, and predictive analytics",
+            "descriptionFr": "Intelligence d'affaires, visualisation de données et analyse prédictive"
+          }
+        ],
+        "thesis": {
+          "name": "Master's Thesis",
+          "nameFr": "Mémoire de Master",
+          "credits": 12,
+          "description": "Independent research project on a business topic of choice",
+          "descriptionFr": "Projet de recherche indépendant sur un sujet d'affaires au choix"
+        }
+      },
+      "curriculumFr": "Cours principaux: Management Stratégique, Gestion Financière, Management Marketing, Management des Opérations, Leadership et Éthique, Commerce International. Cours optionnels: Transformation Digitale, Entrepreneuriat, Management Durable, Analyse de Données.",
+      "degree": "Master's",
+      "duration": "2 years",
+      "studyType": "on-campus",
+      "studyLevel": "graduate",
+      "subject": "Management",
+      "field": "Business Administration",
+      "language": "French, English",
+      "tuition": "€45,000",
+      "tuitionAmount": "45000.00",
+      "tuitionCurrency": "EUR",
+      "startDate": "2025-09-01",
+      "applicationDeadline": "2025-03-15",
+      "intake": "September 2025",
+      "scholarships": true,
+      "featured": true,
+      "aidvisorRecommended": true,
+      "easyApply": false,
+      "ranking": 15,
+      "rating": "4.8",
+      "reviews": 156,
+      "universityType": "A",
+      "isActive": true,
+      "structuredRequirements": {
+        "academic": {
+          "title": "Certificats académiques",
+          "items": [
+            {
+              "name": "Diplôme de premier cycle",
+              "description": "Diplôme de Bachelor ou équivalent",
+              "required": true,
+              "type": "document"
+            },
+            {
+              "name": "Relevés de notes",
+              "description": "Relevés de notes avec mention",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        },
+        "english": {
+          "title": "Tests de langue anglaise",
+          "items": [
+            {
+              "name": "IELTS ou TOEFL",
+              "description": "IELTS 6.5+ ou TOEFL 90+",
+              "required": true,
+              "type": "test"
+            }
+          ]
+        },
+        "documents": {
+          "title": "Documents requis",
+          "items": [
+            {
+              "name": "CV/Resume",
+              "description": "Curriculum vitae détaillé",
+              "required": true,
+              "type": "document"
+            },
+            {
+              "name": "Lettres de recommandation",
+              "description": "2 lettres de recommandation",
+              "required": true,
+              "type": "document"
+            },
+            {
+              "name": "Essai de motivation",
+              "description": "Essai de motivation personnalisé",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        }
+      },
+      "detailedRequirements": [
+        {
+          "type": "academic_qualification",
+          "subtype": "bachelor",
+          "name": "Bachelor's Degree Required",
+          "description": "This program requires a Bachelor's degree or equivalent",
+          "minimumValue": null,
+          "maximumValue": null,
+          "unit": null,
+          "system": null,
+          "isRequired": true,
+          "displayText": "Bachelor's Degree Required"
+        },
+        {
+          "type": "grade",
+          "subtype": "GPA_4",
+          "name": "Minimum Grade Requirement",
+          "description": "Minimum grade required: 3.0/4.0",
+          "minimumValue": "3.0",
+          "maximumValue": null,
+          "unit": "4.0",
+          "system": "GPA_4",
+          "isRequired": true,
+          "displayText": "GPA_4: 3.0"
+        },
+        {
+          "type": "language_test",
+          "subtype": "ielts",
+          "name": "IELTS English Test Required",
+          "description": "This program requires a valid IELTS English test score",
+          "minimumValue": "6.5",
+          "maximumValue": null,
+          "unit": "9.0",
+          "system": null,
+          "isRequired": true,
+          "displayText": "IELTS English Test Required: 6.5"
+        }
+      ],
+      "establishment": {
+        "name": "EM Lyon Business School",
+        "country": "France",
+        "city": "Lyon"
+      }
+    },
+    {
+      "name": "MSc in Finance",
+      "nameFr": "MSc en Finance",
+      "description": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Finance d'EM Lyon prépare les étudiants aux carrières exigeantes de la finance moderne. Ce programme de 12 mois combine théorie financière avancée, outils quantitatifs et expérience pratique pour former des professionnels de la finance prêts à relever les défis des marchés internationaux.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Accès aux données financières en temps réel</li>\n      <li>• Partenariats avec les grandes banques</li>\n      <li>• Certifications professionnelles intégrées</li>\n      <li>• Stage de 4-6 mois en entreprise</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Banque d'investissement</li>\n      <li>• Gestion d'actifs</li>\n      <li>• Finance d'entreprise</li>\n      <li>• Trading et marchés</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "descriptionFr": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Finance d'EM Lyon prépare les étudiants aux carrières exigeantes de la finance moderne. Ce programme de 12 mois combine théorie financière avancée, outils quantitatifs et expérience pratique pour former des professionnels de la finance prêts à relever les défis des marchés internationaux.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Accès aux données financières en temps réel</li>\n      <li>• Partenariats avec les grandes banques</li>\n      <li>• Certifications professionnelles intégrées</li>\n      <li>• Stage de 4-6 mois en entreprise</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Banque d'investissement</li>\n      <li>• Gestion d'actifs</li>\n      <li>• Finance d'entreprise</li>\n      <li>• Trading et marchés</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "curriculum": {
+        "coreCourses": [
+          {
+            "name": "Corporate Finance",
+            "nameFr": "Finance d'Entreprise",
+            "credits": 6,
+            "description": "Advanced corporate finance theory and applications",
+            "descriptionFr": "Théorie et applications avancées de la finance d'entreprise"
+          },
+          {
+            "name": "Investment Analysis",
+            "nameFr": "Analyse d'Investissement",
+            "credits": 6,
+            "description": "Portfolio theory, asset pricing, and risk management",
+            "descriptionFr": "Théorie de portefeuille, évaluation d'actifs et gestion des risques"
+          },
+          {
+            "name": "Financial Markets",
+            "nameFr": "Marchés Financiers",
+            "credits": 4,
+            "description": "Market structure, trading mechanisms, and regulation",
+            "descriptionFr": "Structure des marchés, mécanismes de trading et réglementation"
+          },
+          {
+            "name": "Quantitative Methods",
+            "nameFr": "Méthodes Quantitatives",
+            "credits": 4,
+            "description": "Mathematical finance, derivatives, and modeling",
+            "descriptionFr": "Mathématiques financières, produits dérivés et modélisation"
+          }
+        ],
+        "electiveCourses": [
+          {
+            "name": "Private Equity",
+            "nameFr": "Capital-Investissement",
+            "credits": 3,
+            "description": "Private equity strategies and deal structuring",
+            "descriptionFr": "Stratégies de capital-investissement et structuration de transactions"
+          },
+          {
+            "name": "Fintech",
+            "nameFr": "Fintech",
+            "credits": 3,
+            "description": "Financial technology and digital banking",
+            "descriptionFr": "Technologie financière et banque digitale"
+          }
+        ]
+      },
+      "curriculumFr": "Cours principaux: Finance d'Entreprise, Analyse d'Investissement, Marchés Financiers, Méthodes Quantitatives. Cours optionnels: Capital-Investissement, Fintech.",
+      "degree": "Master's",
+      "duration": "12 months",
+      "studyType": "on-campus",
+      "studyLevel": "graduate",
+      "subject": "Finance",
+      "field": "Finance",
+      "language": "English",
+      "tuition": "€28,000",
+      "tuitionAmount": "28000.00",
+      "tuitionCurrency": "EUR",
+      "startDate": "2025-09-01",
+      "applicationDeadline": "2025-03-15",
+      "intake": "September 2025",
+      "scholarships": true,
+      "featured": true,
+      "aidvisorRecommended": true,
+      "easyApply": false,
+      "ranking": 15,
+      "rating": "4.7",
+      "reviews": 89,
+      "universityType": "A",
+      "isActive": true,
+      "structuredRequirements": {
+        "academic": {
+          "title": "Certificats académiques",
+          "items": [
+            {
+              "name": "Diplôme de premier cycle",
+              "description": "Diplôme de Bachelor en Finance, Économie ou domaine connexe",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        },
+        "english": {
+          "title": "Tests de langue anglaise",
+          "items": [
+            {
+              "name": "IELTS ou TOEFL",
+              "description": "IELTS 6.5+ ou TOEFL 90+",
+              "required": true,
+              "type": "test"
+            }
+          ]
+        }
+      },
+      "detailedRequirements": [
+        {
+          "type": "academic_qualification",
+          "subtype": "bachelor",
+          "name": "Bachelor's Degree Required",
+          "description": "This program requires a Bachelor's degree in Finance, Economics or related field",
+          "minimumValue": null,
+          "maximumValue": null,
+          "unit": null,
+          "system": null,
+          "isRequired": true,
+          "displayText": "Bachelor's Degree Required"
+        },
+        {
+          "type": "grade",
+          "subtype": "GPA_4",
+          "name": "Minimum Grade Requirement",
+          "description": "Minimum grade required: 3.2/4.0",
+          "minimumValue": "3.2",
+          "maximumValue": null,
+          "unit": "4.0",
+          "system": "GPA_4",
+          "isRequired": true,
+          "displayText": "GPA_4: 3.2"
+        },
+        {
+          "type": "language_test",
+          "subtype": "ielts",
+          "name": "IELTS English Test Required",
+          "description": "This program requires a valid IELTS English test score",
+          "minimumValue": "6.5",
+          "maximumValue": null,
+          "unit": "9.0",
+          "system": null,
+          "isRequired": true,
+          "displayText": "IELTS English Test Required: 6.5"
+        }
+      ],
+      "establishment": {
+        "name": "EM Lyon Business School",
+        "country": "France",
+        "city": "Lyon"
+      }
+    },
+    {
+      "name": "MSc in Digital Marketing",
+      "nameFr": "MSc en Marketing Digital",
+      "description": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Marketing Digital d'EM Lyon forme les futurs experts du marketing à l'ère numérique. Ce programme innovant combine stratégie marketing, technologies digitales et data analytics pour préparer les étudiants aux défis du marketing moderne.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Certifications Google et Facebook intégrées</li>\n      <li>• Projets avec des entreprises partenaires</li>\n      <li>• Laboratoire de marketing digital</li>\n      <li>• Réseau d'experts du secteur</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Marketing digital</li>\n      <li>• E-commerce</li>\n      <li>• Data marketing</li>\n      <li>• Brand management</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "descriptionFr": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Marketing Digital d'EM Lyon forme les futurs experts du marketing à l'ère numérique. Ce programme innovant combine stratégie marketing, technologies digitales et data analytics pour préparer les étudiants aux défis du marketing moderne.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Certifications Google et Facebook intégrées</li>\n      <li>• Projets avec des entreprises partenaires</li>\n      <li>• Laboratoire de marketing digital</li>\n      <li>• Réseau d'experts du secteur</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Marketing digital</li>\n      <li>• E-commerce</li>\n      <li>• Data marketing</li>\n      <li>• Brand management</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "curriculum": {
+        "coreCourses": [
+          {
+            "name": "Digital Marketing Strategy",
+            "nameFr": "Stratégie Marketing Digital",
+            "credits": 6,
+            "description": "Digital marketing planning and strategy development",
+            "descriptionFr": "Planification et développement de stratégie marketing digital"
+          },
+          {
+            "name": "Data Analytics for Marketing",
+            "nameFr": "Analyse de Données Marketing",
+            "credits": 6,
+            "description": "Marketing analytics, customer insights, and performance measurement",
+            "descriptionFr": "Analytics marketing, insights clients et mesure de performance"
+          },
+          {
+            "name": "Social Media Marketing",
+            "nameFr": "Marketing sur les Réseaux Sociaux",
+            "credits": 4,
+            "description": "Social media strategy, content creation, and community management",
+            "descriptionFr": "Stratégie réseaux sociaux, création de contenu et gestion de communauté"
+          },
+          {
+            "name": "E-commerce and Online Retail",
+            "nameFr": "E-commerce et Vente en Ligne",
+            "credits": 4,
+            "description": "Online retail strategies and e-commerce platforms",
+            "descriptionFr": "Stratégies de vente en ligne et plateformes e-commerce"
+          }
+        ],
+        "electiveCourses": [
+          {
+            "name": "Influencer Marketing",
+            "nameFr": "Marketing d'Influence",
+            "credits": 3,
+            "description": "Influencer strategies and partnership management",
+            "descriptionFr": "Stratégies d'influence et gestion de partenariats"
+          },
+          {
+            "name": "Marketing Automation",
+            "nameFr": "Automatisation Marketing",
+            "credits": 3,
+            "description": "Marketing automation tools and customer journey optimization",
+            "descriptionFr": "Outils d'automatisation marketing et optimisation du parcours client"
+          }
+        ]
+      },
+      "curriculumFr": "Cours principaux: Stratégie Marketing Digital, Analyse de Données Marketing, Marketing sur les Réseaux Sociaux, E-commerce et Vente en Ligne. Cours optionnels: Marketing d'Influence, Automatisation Marketing.",
+      "degree": "Master's",
+      "duration": "12 months",
+      "studyType": "on-campus",
+      "studyLevel": "graduate",
+      "subject": "Marketing",
+      "field": "Digital Marketing",
+      "language": "English",
+      "tuition": "€26,000",
+      "tuitionAmount": "26000.00",
+      "tuitionCurrency": "EUR",
+      "startDate": "2025-09-01",
+      "applicationDeadline": "2025-03-15",
+      "intake": "September 2025",
+      "scholarships": true,
+      "featured": true,
+      "aidvisorRecommended": true,
+      "easyApply": false,
+      "ranking": 15,
+      "rating": "4.6",
+      "reviews": 67,
+      "universityType": "A",
+      "isActive": true,
+      "structuredRequirements": {
+        "academic": {
+          "title": "Certificats académiques",
+          "items": [
+            {
+              "name": "Diplôme de premier cycle",
+              "description": "Diplôme de Bachelor en Marketing, Communication ou domaine connexe",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        },
+        "english": {
+          "title": "Tests de langue anglaise",
+          "items": [
+            {
+              "name": "IELTS ou TOEFL",
+              "description": "IELTS 6.0+ ou TOEFL 80+",
+              "required": true,
+              "type": "test"
+            }
+          ]
+        }
+      },
+      "detailedRequirements": [
+        {
+          "type": "academic_qualification",
+          "subtype": "bachelor",
+          "name": "Bachelor's Degree Required",
+          "description": "This program requires a Bachelor's degree in Marketing, Communication or related field",
+          "minimumValue": null,
+          "maximumValue": null,
+          "unit": null,
+          "system": null,
+          "isRequired": true,
+          "displayText": "Bachelor's Degree Required"
+        },
+        {
+          "type": "grade",
+          "subtype": "GPA_4",
+          "name": "Minimum Grade Requirement",
+          "description": "Minimum grade required: 3.0/4.0",
+          "minimumValue": "3.0",
+          "maximumValue": null,
+          "unit": "4.0",
+          "system": "GPA_4",
+          "isRequired": true,
+          "displayText": "GPA_4: 3.0"
+        },
+        {
+          "type": "language_test",
+          "subtype": "ielts",
+          "name": "IELTS English Test Required",
+          "description": "This program requires a valid IELTS English test score",
+          "minimumValue": "6.0",
+          "maximumValue": null,
+          "unit": "9.0",
+          "system": null,
+          "isRequired": true,
+          "displayText": "IELTS English Test Required: 6.0"
+        }
+      ],
+      "establishment": {
+        "name": "EM Lyon Business School",
+        "country": "France",
+        "city": "Lyon"
+      }
+    },
+    {
+      "name": "Master in Management (Grande École)",
+      "nameFr": "Master in Management (Grande École)",
+      "description": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le Master in Management de SKEMA Business School est un programme d'excellence qui forme les leaders de demain. Avec ses 7 campus dans le monde, SKEMA offre une expérience internationale unique et une approche innovante du management.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• 7 campus internationaux</li>\n      <li>• Triple accréditation AACSB, EQUIS, AMBA</li>\n      <li>• 50% d'étudiants internationaux</li>\n      <li>• 95% d'insertion professionnelle</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Consulting international</li>\n      <li>• Finance et banque</li>\n      <li>• Marketing et communication</li>\n      <li>• Entrepreneuriat</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "descriptionFr": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le Master in Management de SKEMA Business School est un programme d'excellence qui forme les leaders de demain. Avec ses 7 campus dans le monde, SKEMA offre une expérience internationale unique et une approche innovante du management.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• 7 campus internationaux</li>\n      <li>• Triple accréditation AACSB, EQUIS, AMBA</li>\n      <li>• 50% d'étudiants internationaux</li>\n      <li>• 95% d'insertion professionnelle</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Consulting international</li>\n      <li>• Finance et banque</li>\n      <li>• Marketing et communication</li>\n      <li>• Entrepreneuriat</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "curriculum": {
+        "coreCourses": [
+          {
+            "name": "Global Strategy",
+            "nameFr": "Stratégie Globale",
+            "credits": 6,
+            "description": "International business strategy and global market analysis",
+            "descriptionFr": "Stratégie d'affaires internationales et analyse des marchés mondiaux"
+          },
+          {
+            "name": "Cross-Cultural Management",
+            "nameFr": "Management Interculturel",
+            "credits": 4,
+            "description": "Managing diverse teams and international organizations",
+            "descriptionFr": "Gestion d'équipes diversifiées et d'organisations internationales"
+          },
+          {
+            "name": "Innovation Management",
+            "nameFr": "Management de l'Innovation",
+            "credits": 4,
+            "description": "Innovation strategies and digital transformation",
+            "descriptionFr": "Stratégies d'innovation et transformation digitale"
+          },
+          {
+            "name": "Sustainable Business",
+            "nameFr": "Business Durable",
+            "credits": 4,
+            "description": "Corporate sustainability and responsible business practices",
+            "descriptionFr": "Durabilité d'entreprise et pratiques commerciales responsables"
+          }
+        ],
+        "electiveCourses": [
+          {
+            "name": "Digital Business",
+            "nameFr": "Business Digital",
+            "credits": 3,
+            "description": "Digital business models and e-commerce strategies",
+            "descriptionFr": "Modèles d'affaires digitaux et stratégies e-commerce"
+          },
+          {
+            "name": "International Finance",
+            "nameFr": "Finance Internationale",
+            "credits": 3,
+            "description": "Global financial markets and international banking",
+            "descriptionFr": "Marchés financiers mondiaux et banque internationale"
+          }
+        ]
+      },
+      "curriculumFr": "Cours principaux: Stratégie Globale, Management Interculturel, Management de l'Innovation, Business Durable. Cours optionnels: Business Digital, Finance Internationale.",
+      "degree": "Master's",
+      "duration": "2 years",
+      "studyType": "on-campus",
+      "studyLevel": "graduate",
+      "subject": "Management",
+      "field": "International Business",
+      "language": "English, French",
+      "tuition": "€42,000",
+      "tuitionAmount": "42000.00",
+      "tuitionCurrency": "EUR",
+      "startDate": "2025-09-01",
+      "applicationDeadline": "2025-03-15",
+      "intake": "September 2025",
+      "scholarships": true,
+      "featured": true,
+      "aidvisorRecommended": true,
+      "easyApply": false,
+      "ranking": 25,
+      "rating": "4.7",
+      "reviews": 134,
+      "universityType": "A",
+      "isActive": true,
+      "structuredRequirements": {
+        "academic": {
+          "title": "Certificats académiques",
+          "items": [
+            {
+              "name": "Diplôme de premier cycle",
+              "description": "Diplôme de Bachelor ou équivalent",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        },
+        "english": {
+          "title": "Tests de langue anglaise",
+          "items": [
+            {
+              "name": "IELTS ou TOEFL",
+              "description": "IELTS 6.5+ ou TOEFL 90+",
+              "required": true,
+              "type": "test"
+            }
+          ]
+        }
+      },
+      "detailedRequirements": [
+        {
+          "type": "academic_qualification",
+          "subtype": "bachelor",
+          "name": "Bachelor's Degree Required",
+          "description": "This program requires a Bachelor's degree or equivalent",
+          "minimumValue": null,
+          "maximumValue": null,
+          "unit": null,
+          "system": null,
+          "isRequired": true,
+          "displayText": "Bachelor's Degree Required"
+        },
+        {
+          "type": "grade",
+          "subtype": "GPA_4",
+          "name": "Minimum Grade Requirement",
+          "description": "Minimum grade required: 3.0/4.0",
+          "minimumValue": "3.0",
+          "maximumValue": null,
+          "unit": "4.0",
+          "system": "GPA_4",
+          "isRequired": true,
+          "displayText": "GPA_4: 3.0"
+        },
+        {
+          "type": "language_test",
+          "subtype": "ielts",
+          "name": "IELTS English Test Required",
+          "description": "This program requires a valid IELTS English test score",
+          "minimumValue": "6.5",
+          "maximumValue": null,
+          "unit": "9.0",
+          "system": null,
+          "isRequired": true,
+          "displayText": "IELTS English Test Required: 6.5"
+        }
+      ],
+      "establishment": {
+        "name": "SKEMA Business School",
+        "country": "France",
+        "city": "Paris"
+      }
+    },
+    {
+      "name": "MSc in Luxury Management",
+      "nameFr": "MSc en Management du Luxe",
+      "description": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Management du Luxe de SKEMA Business School prépare les étudiants aux carrières exigeantes de l'industrie du luxe. Ce programme unique combine expertise business et connaissance approfondie des codes du luxe.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Partenariats avec les grandes maisons de luxe</li>\n      <li>• Campus à Paris, cœur du luxe mondial</li>\n      <li>• Visites d'entreprises et rencontres professionnelles</li>\n      <li>• Réseau d'anciens dans l'industrie du luxe</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Brand management</li>\n      <li>• Retail et distribution</li>\n      <li>• Communication et marketing</li>\n      <li>• Développement produit</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "descriptionFr": "<div class=\"space-y-6\">\n<h2 class=\"text-2xl font-bold text-gray-900 mb-4\">Aperçu du programme</h2>\n<p class=\"text-gray-700 leading-relaxed\">Le MSc en Management du Luxe de SKEMA Business School prépare les étudiants aux carrières exigeantes de l'industrie du luxe. Ce programme unique combine expertise business et connaissance approfondie des codes du luxe.</p>\n\n<div class=\"grid grid-cols-1 md:grid-cols-2 gap-6 my-6\">\n  <div class=\"bg-blue-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-blue-900 mb-2\">Points forts du programme</h3>\n    <ul class=\"text-blue-800 space-y-1 text-sm\">\n      <li>• Partenariats avec les grandes maisons de luxe</li>\n      <li>• Campus à Paris, cœur du luxe mondial</li>\n      <li>• Visites d'entreprises et rencontres professionnelles</li>\n      <li>• Réseau d'anciens dans l'industrie du luxe</li>\n    </ul>\n  </div>\n  <div class=\"bg-green-50 p-4 rounded-lg\">\n    <h3 class=\"font-semibold text-green-900 mb-2\">Perspectives de carrière</h3>\n    <ul class=\"text-green-800 space-y-1 text-sm\">\n      <li>• Brand management</li>\n      <li>• Retail et distribution</li>\n      <li>• Communication et marketing</li>\n      <li>• Développement produit</li>\n    </ul>\n  </div>\n</div>\n</div>",
+      "curriculum": {
+        "coreCourses": [
+          {
+            "name": "Luxury Brand Management",
+            "nameFr": "Management de Marque de Luxe",
+            "credits": 6,
+            "description": "Brand strategy, positioning, and heritage management in luxury",
+            "descriptionFr": "Stratégie de marque, positionnement et gestion du patrimoine dans le luxe"
+          },
+          {
+            "name": "Luxury Consumer Behavior",
+            "nameFr": "Comportement du Consommateur de Luxe",
+            "credits": 4,
+            "description": "Understanding luxury consumers and market segmentation",
+            "descriptionFr": "Comprendre les consommateurs de luxe et la segmentation de marché"
+          },
+          {
+            "name": "Luxury Retail Management",
+            "nameFr": "Management du Retail de Luxe",
+            "credits": 4,
+            "description": "Luxury retail strategies and customer experience",
+            "descriptionFr": "Stratégies de retail de luxe et expérience client"
+          },
+          {
+            "name": "Luxury Marketing and Communication",
+            "nameFr": "Marketing et Communication de Luxe",
+            "credits": 4,
+            "description": "Luxury marketing strategies and brand communication",
+            "descriptionFr": "Stratégies marketing de luxe et communication de marque"
+          }
+        ],
+        "electiveCourses": [
+          {
+            "name": "Luxury E-commerce",
+            "nameFr": "E-commerce de Luxe",
+            "credits": 3,
+            "description": "Digital strategies for luxury brands",
+            "descriptionFr": "Stratégies digitales pour les marques de luxe"
+          },
+          {
+            "name": "Luxury Supply Chain",
+            "nameFr": "Chaîne d'Approvisionnement de Luxe",
+            "credits": 3,
+            "description": "Supply chain management in luxury industries",
+            "descriptionFr": "Gestion de la chaîne d'approvisionnement dans les industries de luxe"
+          }
+        ]
+      },
+      "curriculumFr": "Cours principaux: Management de Marque de Luxe, Comportement du Consommateur de Luxe, Management du Retail de Luxe, Marketing et Communication de Luxe. Cours optionnels: E-commerce de Luxe, Chaîne d'Approvisionnement de Luxe.",
+      "degree": "Master's",
+      "duration": "12 months",
+      "studyType": "on-campus",
+      "studyLevel": "graduate",
+      "subject": "Marketing",
+      "field": "Luxury Management",
+      "language": "English",
+      "tuition": "€30,000",
+      "tuitionAmount": "30000.00",
+      "tuitionCurrency": "EUR",
+      "startDate": "2025-09-01",
+      "applicationDeadline": "2025-03-15",
+      "intake": "September 2025",
+      "scholarships": true,
+      "featured": true,
+      "aidvisorRecommended": true,
+      "easyApply": false,
+      "ranking": 25,
+      "rating": "4.8",
+      "reviews": 78,
+      "universityType": "A",
+      "isActive": true,
+      "structuredRequirements": {
+        "academic": {
+          "title": "Certificats académiques",
+          "items": [
+            {
+              "name": "Diplôme de premier cycle",
+              "description": "Diplôme de Bachelor en Marketing, Business ou domaine connexe",
+              "required": true,
+              "type": "document"
+            }
+          ]
+        },
+        "english": {
+          "title": "Tests de langue anglaise",
+          "items": [
+            {
+              "name": "IELTS ou TOEFL",
+              "description": "IELTS 6.5+ ou TOEFL 90+",
+              "required": true,
+              "type": "test"
+            }
+          ]
+        }
+      },
+      "detailedRequirements": [
+        {
+          "type": "academic_qualification",
+          "subtype": "bachelor",
+          "name": "Bachelor's Degree Required",
+          "description": "This program requires a Bachelor's degree in Marketing, Business or related field",
+          "minimumValue": null,
+          "maximumValue": null,
+          "unit": null,
+          "system": null,
+          "isRequired": true,
+          "displayText": "Bachelor's Degree Required"
+        },
+        {
+          "type": "grade",
+          "subtype": "GPA_4",
+          "name": "Minimum Grade Requirement",
+          "description": "Minimum grade required: 3.0/4.0",
+          "minimumValue": "3.0",
+          "maximumValue": null,
+          "unit": "4.0",
+          "system": "GPA_4",
+          "isRequired": true,
+          "displayText": "GPA_4: 3.0"
+        },
+        {
+          "type": "language_test",
+          "subtype": "ielts",
+          "name": "IELTS English Test Required",
+          "description": "This program requires a valid IELTS English test score",
+          "minimumValue": "6.5",
+          "maximumValue": null,
+          "unit": "9.0",
+          "system": null,
+          "isRequired": true,
+          "displayText": "IELTS English Test Required: 6.5"
+        }
+      ],
+      "establishment": {
+        "name": "SKEMA Business School",
+        "country": "France",
+        "city": "Paris"
+      }
+    }
+  ]
+}
