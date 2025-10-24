@@ -38,6 +38,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $lastName = null;
 
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: UserProfile::class, cascade: ['persist', 'remove'])]
+    private ?UserProfile $profile = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: Preferences::class, cascade: ['persist', 'remove'])]
+    private ?Preferences $preferences = null;
+
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $preferredLanguage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -123,6 +132,54 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->lastName = $lastName;
 
+        return $this;
+    }
+
+    public function getProfile(): ?UserProfile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?UserProfile $profile): static
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
+    public function getPreferences(): ?Preferences
+    {
+        return $this->preferences;
+    }
+
+    public function setPreferences(?Preferences $preferences): static
+    {
+        $this->preferences = $preferences;
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->profile?->getCountry();
+    }
+
+    public function getPreferredCountry(): ?string
+    {
+        return $this->preferences?->getPreferredCountry();
+    }
+
+    public function getPreferredCurrency(): ?string
+    {
+        return $this->preferences?->getPreferredCurrency();
+    }
+
+    public function getPreferredLanguage(): ?string
+    {
+        return $this->preferredLanguage;
+    }
+
+    public function setPreferredLanguage(?string $preferredLanguage): static
+    {
+        $this->preferredLanguage = $preferredLanguage;
         return $this;
     }
 

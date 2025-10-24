@@ -1,0 +1,21 @@
+# Configuration pour les uploads de fichiers
+php_value upload_max_filesize 50M
+php_value post_max_size 50M
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value memory_limit 256M
+
+# Configuration pour les fichiers temporaires
+php_value upload_tmp_dir /tmp
+
+# Sécurité
+<Files "*.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Permettre l'accès aux fichiers uploadés
+<FilesMatch "\.(pdf|doc|docx|jpg|jpeg|png|gif|txt)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>

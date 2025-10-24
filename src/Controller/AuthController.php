@@ -174,7 +174,8 @@ final class AuthController extends AbstractController
                     'email' => $user->getEmail(),
                     'firstName' => $user->getFirstName(),
                     'lastName' => $user->getLastName(),
-                    'roles' => $user->getRoles()
+                    'roles' => $user->getRoles(),
+                    'preferredLanguage' => $user->getPreferredLanguage() ?? 'fr'
                 ]
             ]
         ]);
@@ -202,5 +203,58 @@ final class AuthController extends AbstractController
                 'token' => $token
             ]
         ]);
+    }
+
+    #[Route('/api/auth/update-language', name: 'app_auth_update_language', methods: ['POST'])]
+    public function updateLanguage(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Non authentifié'
+            ], 401);
+        }
+
+        try {
+            $data = json_decode($request->getContent(), true);
+
+            if (!$data || !isset($data['language'])) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Langue requise'
+                ], 400);
+            }
+
+            $language = $data['language'];
+
+            // Valider que la langue est supportée
+            if (!in_array($language, ['fr', 'en', 'ar'])) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Langue non supportée'
+                ], 400);
+            }
+
+            // Mettre à jour la langue préférée
+            $user->setPreferredLanguage($language);
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Langue mise à jour avec succès',
+                'data' => [
+                    'preferredLanguage' => $language
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour de la langue',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

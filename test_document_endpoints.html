@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Document Endpoints</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Document Endpoints</h1>
+    
+    <div class="test-section">
+        <h3>Configuration</h3>
+        <label for="jwt-token">JWT Token:</label><br>
+        <input type="text" id="jwt-token" placeholder="Enter your JWT token here">
+        <br><br>
+        <label for="document-id">Document ID:</label><br>
+        <input type="number" id="document-id" value="21" placeholder="Document ID to test">
+    </div>
+
+    <div class="test-section">
+        <h3>Test Endpoints</h3>
+        <button onclick="testDownload()">Test Download</button>
+        <button onclick="testView()">Test View</button>
+        <button onclick="testGetDocuments()">Test Get Documents</button>
+        <button onclick="testUpdateDocument()">Test Update Document</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Results</h3>
+        <pre id="results">Click a test button to see results...</pre>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        
+        function getToken() {
+            return document.getElementById('jwt-token').value;
+        }
+        
+        function getDocumentId() {
+            return document.getElementById('document-id').value;
+        }
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        async function makeRequest(url, options = {}) {
+            const token = getToken();
+            if (!token) {
+                log('❌ JWT Token is required', 'error');
+                return null;
+            }
+            
+            const defaultOptions = {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            };
+            
+            try {
+                log(`🔄 Making request to: ${url}`);
+                const response = await fetch(url, { ...defaultOptions, ...options });
+                log(`📊 Response status: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    if (options.responseType === 'blob') {
+                        log(`✅ Blob response received (${response.headers.get('content-length')} bytes)`, 'success');
+                        return response;
+                    } else {
+                        const data = await response.json();
+                        log(`✅ JSON response: ${JSON.stringify(data, null, 2)}`, 'success');
+                        return data;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Error response: ${errorText}`, 'error');
+                    return null;
+                }
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function testDownload() {
+            const documentId = getDocumentId();
+            const url = `${API_BASE}/profile/documents/${documentId}/download`;
+            log(`\n=== Testing Download Endpoint ===`);
+            
+            const response = await makeRequest(url, { responseType: 'blob' });
+            if (response) {
+                // Create download link
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `document-${documentId}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(downloadUrl);
+                log(`📥 Download initiated`, 'success');
+            }
+        }
+        
+        async function testView() {
+            const documentId = getDocumentId();
+            const url = `${API_BASE}/profile/documents/${documentId}/view`;
+            log(`\n=== Testing View Endpoint ===`);
+            
+            const response = await makeRequest(url, { responseType: 'blob' });
+            if (response) {
+                const blob = await response.blob();
+                const viewUrl = window.URL.createObjectURL(blob);
+                window.open(viewUrl, '_blank');
+                log(`👁️ Document opened in new tab`, 'success');
+            }
+        }
+        
+        async function testGetDocuments() {
+            const url = `${API_BASE}/profile/documents`;
+            log(`\n=== Testing Get Documents Endpoint ===`);
+            
+            await makeRequest(url);
+        }
+        
+        async function testUpdateDocument() {
+            const documentId = getDocumentId();
+            const url = `${API_BASE}/profile/documents/${documentId}`;
+            log(`\n=== Testing Update Document Endpoint ===`);
+            
+            const updateData = {
+                title: 'Updated Document Title',
+                description: 'Updated description for testing'
+            };
+            
+            await makeRequest(url, {
+                method: 'PUT',
+                body: JSON.stringify(updateData)
+            });
+        }
+        
+        // Auto-fill token from localStorage if available
+        window.onload = function() {
+            const savedToken = localStorage.getItem('jwt_token');
+            if (savedToken) {
+                document.getElementById('jwt-token').value = savedToken;
+                log('🔑 JWT Token loaded from localStorage', 'success');
+            }
+        };
+    </script>
+</body>
+</html>

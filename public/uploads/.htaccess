@@ -1,0 +1,28 @@
+# Allow access to uploaded files
+
+<Files "\*">
+Order allow,deny
+Allow from all
+</Files>
+
+# Security headers
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options nosniff
+    Header set X-Frame-Options DENY
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Prevent execution of PHP files in upload directories
+
+<Files "\*.php">
+Order deny,allow
+Deny from all
+</Files>
+
+# Prevent access to sensitive files
+
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|inc|bak)$">
+Order deny,allow
+Deny from all
+</FilesMatch>

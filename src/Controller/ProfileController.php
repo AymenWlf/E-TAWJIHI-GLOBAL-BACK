@@ -1,0 +1,1000 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\User;
+use App\Entity\UserProfile;
+use App\Entity\Qualification;
+use App\Entity\Document;
+use App\Entity\Application;
+use App\Entity\Shortlist;
+use App\Repository\ShortlistRepository;
+use App\Repository\UserRepository;
+use App\Repository\UserProfileRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\String\Slugger\SluggerInterface;
+
+#[Route('/api/profile', name: 'app_profile_')]
+#[IsGranted('ROLE_USER')]
+class ProfileController extends AbstractController
+{
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private UserRepository $userRepository,
+        private UserProfileRepository $userProfileRepository,
+        private ShortlistRepository $shortlistRepository,
+        private SerializerInterface $serializer,
+        private SluggerInterface $slugger
+    ) {}
+
+    private function getProjectDir(): string
+    {
+        return dirname(__DIR__, 2);
+    }
+
+    #[Route('', name: 'get', methods: ['GET'])]
+    public function getProfile(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            // Create profile if it doesn't exist
+            $profile = $this->createDefaultProfile($user);
+        }
+
+        $data = $this->serializeProfile($profile);
+        return new JsonResponse($data);
+    }
+
+    #[Route('', name: 'update', methods: ['PUT'])]
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            $profile = $this->createDefaultProfile($user);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        // Handle case where frontend sends { userProfile: {...} } structure
+        if (isset($data['userProfile']) && is_array($data['userProfile'])) {
+            $data = $data['userProfile'];
+        }
+
+        // Update basic profile information
+        if (isset($data['firstName'])) $profile->setFirstName($data['firstName']);
+        if (isset($data['lastName'])) $profile->setLastName($data['lastName']);
+        if (isset($data['country'])) $profile->setCountry($data['country']);
+        if (isset($data['city'])) $profile->setCity($data['city']);
+        if (isset($data['nationality'])) $profile->setNationality($data['nationality']);
+        if (isset($data['phone'])) $profile->setPhone($data['phone']);
+        if (isset($data['whatsapp'])) $profile->setWhatsapp($data['whatsapp']);
+        if (isset($data['phoneCountry'])) $profile->setPhoneCountry($data['phoneCountry']);
+        if (isset($data['whatsappCountry'])) $profile->setWhatsappCountry($data['whatsappCountry']);
+        if (isset($data['passportNumber'])) $profile->setPassportNumber($data['passportNumber']);
+        if (isset($data['address'])) $profile->setAddress($data['address']);
+        if (isset($data['postalCode'])) $profile->setPostalCode($data['postalCode']);
+        if (isset($data['dateOfBirth'])) {
+            $profile->setDateOfBirth(new \DateTime($data['dateOfBirth']));
+        }
+        if (isset($data['avatar'])) $profile->setAvatar($data['avatar']);
+        if (isset($data['studyLevel'])) $profile->setStudyLevel($data['studyLevel']);
+        if (isset($data['fieldOfStudy'])) $profile->setFieldOfStudy($data['fieldOfStudy']);
+        if (isset($data['preferredCountry'])) $profile->setPreferredCountry($data['preferredCountry']);
+        if (isset($data['startDate'])) $profile->setStartDate($data['startDate']);
+        if (isset($data['preferredCurrency'])) $profile->setPreferredCurrency($data['preferredCurrency']);
+        if (isset($data['annualBudget'])) {
+            $annualBudget = $data['annualBudget'];
+            // Convertir en float si c'est une chaîne numérique, sinon null
+            if (is_numeric($annualBudget) && $annualBudget !== '') {
+                $profile->setAnnualBudget((float) $annualBudget);
+            } else {
+                $profile->setAnnualBudget(null);
+            }
+        }
+        if (isset($data['scholarshipRequired'])) $profile->setScholarshipRequired($data['scholarshipRequired']);
+        if (isset($data['languagePreferences'])) $profile->setLanguagePreferences($data['languagePreferences']);
+        if (isset($data['onboardingProgress'])) $profile->setOnboardingProgress($data['onboardingProgress']);
+        if (isset($data['preferredDestinations'])) $profile->setPreferredDestinations($data['preferredDestinations']);
+        if (isset($data['preferredIntakes'])) $profile->setPreferredIntakes($data['preferredIntakes']);
+        if (isset($data['preferredSubjects'])) $profile->setPreferredSubjects($data['preferredSubjects']);
+
+        $profile->setUpdatedAt(new \DateTimeImmutable());
+        $this->entityManager->flush();
+
+        $data = $this->serializeProfile($profile);
+        return new JsonResponse($data);
+    }
+
+    #[Route('/qualifications', name: 'get_qualifications', methods: ['GET'])]
+    public function getQualifications(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse([]);
+        }
+
+        $qualifications = $profile->getQualifications();
+        $data = [];
+        foreach ($qualifications as $qualification) {
+            $data[] = [
+                'id' => $qualification->getId(),
+                'type' => $qualification->getType(),
+                'title' => $qualification->getTitle(),
+                'institution' => $qualification->getInstitution(),
+                'field' => $qualification->getField(),
+                'startDate' => $qualification->getStartDate()?->format('Y-m-d'),
+                'endDate' => $qualification->getEndDate()?->format('Y-m-d'),
+                'grade' => $qualification->getGrade(),
+                'score' => $qualification->getScore(),
+                'scoreType' => $qualification->getScoreType(),
+                'expiryDate' => $qualification->getExpiryDate()?->format('Y-m-d'),
+                'status' => $qualification->getStatus(),
+                'description' => $qualification->getDescription(),
+                'detailedScores' => $qualification->getDetailedScores(),
+                'country' => $qualification->getCountry(),
+                'board' => $qualification->getBoard(),
+                'gradingScheme' => $qualification->getGradingScheme(),
+                'englishScore' => $qualification->getEnglishScore(),
+                'createdAt' => $qualification->getCreatedAt()->format('Y-m-d H:i:s'),
+                'updatedAt' => $qualification->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        return new JsonResponse($data);
+    }
+
+    #[Route('/qualifications', name: 'add_qualification', methods: ['POST'])]
+    public function addQualification(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            $profile = $this->createDefaultProfile($user);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $qualification = new Qualification();
+        $qualification->setUserProfile($profile);
+        $qualification->setType($data['type'] ?? 'academic');
+        $qualification->setTitle($data['title']);
+        $qualification->setInstitution($data['institution'] ?? null);
+        $qualification->setField($data['field'] ?? null);
+
+        if (isset($data['startDate'])) {
+            $qualification->setStartDate(new \DateTime($data['startDate']));
+        }
+        if (isset($data['endDate'])) {
+            $qualification->setEndDate(new \DateTime($data['endDate']));
+        }
+        if (isset($data['expiryDate'])) {
+            $qualification->setExpiryDate(new \DateTime($data['expiryDate']));
+        }
+
+        $qualification->setGrade($data['grade'] ?? null);
+        $qualification->setScore($data['score'] ?? null);
+        $qualification->setScoreType($data['scoreType'] ?? null);
+        $qualification->setStatus($data['status'] ?? 'valid');
+        $qualification->setDescription($data['description'] ?? null);
+        $qualification->setCountry($data['country'] ?? null);
+        $qualification->setBoard($data['board'] ?? null);
+        $qualification->setGradingScheme($data['gradingScheme'] ?? null);
+        $qualification->setEnglishScore($data['englishScore'] ?? null);
+        $qualification->setAcademicQualification($data['academicQualification'] ?? null);
+        $qualification->setExactQualificationName($data['exactQualificationName'] ?? null);
+
+        // Handle detailed scores for language tests
+        if (isset($data['detailedScores'])) {
+            $qualification->setDetailedScores($data['detailedScores']);
+        }
+
+        $this->entityManager->persist($qualification);
+        $this->entityManager->flush();
+
+        $responseData = [
+            'id' => $qualification->getId(),
+            'type' => $qualification->getType(),
+            'title' => $qualification->getTitle(),
+            'institution' => $qualification->getInstitution(),
+            'field' => $qualification->getField(),
+            'startDate' => $qualification->getStartDate()?->format('Y-m-d'),
+            'endDate' => $qualification->getEndDate()?->format('Y-m-d'),
+            'grade' => $qualification->getGrade(),
+            'score' => $qualification->getScore(),
+            'scoreType' => $qualification->getScoreType(),
+            'expiryDate' => $qualification->getExpiryDate()?->format('Y-m-d'),
+            'status' => $qualification->getStatus(),
+            'description' => $qualification->getDescription(),
+            'detailedScores' => $qualification->getDetailedScores(),
+            'country' => $qualification->getCountry(),
+            'board' => $qualification->getBoard(),
+            'gradingScheme' => $qualification->getGradingScheme(),
+            'englishScore' => $qualification->getEnglishScore(),
+            'academicQualification' => $qualification->getAcademicQualification(),
+            'exactQualificationName' => $qualification->getExactQualificationName(),
+            'createdAt' => $qualification->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $qualification->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($responseData, Response::HTTP_CREATED);
+    }
+
+    #[Route('/qualifications/{id}', name: 'update_qualification', methods: ['PUT'])]
+    public function updateQualification(int $id, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $qualification = $this->entityManager->getRepository(Qualification::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$qualification) {
+            return new JsonResponse(['error' => 'Qualification not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['type'])) $qualification->setType($data['type']);
+        if (isset($data['title'])) $qualification->setTitle($data['title']);
+        if (isset($data['institution'])) $qualification->setInstitution($data['institution']);
+        if (isset($data['field'])) $qualification->setField($data['field']);
+        if (isset($data['startDate'])) $qualification->setStartDate(new \DateTime($data['startDate']));
+        if (isset($data['endDate'])) $qualification->setEndDate(new \DateTime($data['endDate']));
+        if (isset($data['expiryDate'])) $qualification->setExpiryDate(new \DateTime($data['expiryDate']));
+        if (isset($data['grade'])) $qualification->setGrade($data['grade']);
+        if (isset($data['score'])) $qualification->setScore($data['score']);
+        if (isset($data['scoreType'])) $qualification->setScoreType($data['scoreType']);
+        if (isset($data['status'])) $qualification->setStatus($data['status']);
+        if (isset($data['description'])) $qualification->setDescription($data['description']);
+        if (isset($data['detailedScores'])) $qualification->setDetailedScores($data['detailedScores']);
+        if (isset($data['country'])) $qualification->setCountry($data['country']);
+        if (isset($data['board'])) $qualification->setBoard($data['board']);
+        if (isset($data['gradingScheme'])) $qualification->setGradingScheme($data['gradingScheme']);
+        if (isset($data['englishScore'])) $qualification->setEnglishScore($data['englishScore']);
+        if (isset($data['academicQualification'])) $qualification->setAcademicQualification($data['academicQualification']);
+        if (isset($data['exactQualificationName'])) $qualification->setExactQualificationName($data['exactQualificationName']);
+
+        $qualification->setUpdatedAt(new \DateTimeImmutable());
+        $this->entityManager->flush();
+
+        $responseData = [
+            'id' => $qualification->getId(),
+            'type' => $qualification->getType(),
+            'title' => $qualification->getTitle(),
+            'institution' => $qualification->getInstitution(),
+            'field' => $qualification->getField(),
+            'startDate' => $qualification->getStartDate()?->format('Y-m-d'),
+            'endDate' => $qualification->getEndDate()?->format('Y-m-d'),
+            'grade' => $qualification->getGrade(),
+            'score' => $qualification->getScore(),
+            'scoreType' => $qualification->getScoreType(),
+            'expiryDate' => $qualification->getExpiryDate()?->format('Y-m-d'),
+            'status' => $qualification->getStatus(),
+            'description' => $qualification->getDescription(),
+            'detailedScores' => $qualification->getDetailedScores(),
+            'country' => $qualification->getCountry(),
+            'board' => $qualification->getBoard(),
+            'gradingScheme' => $qualification->getGradingScheme(),
+            'englishScore' => $qualification->getEnglishScore(),
+            'academicQualification' => $qualification->getAcademicQualification(),
+            'exactQualificationName' => $qualification->getExactQualificationName(),
+            'createdAt' => $qualification->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $qualification->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($responseData);
+    }
+
+    #[Route('/qualifications/{id}', name: 'delete_qualification', methods: ['DELETE'])]
+    public function deleteQualification(int $id): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $qualification = $this->entityManager->getRepository(Qualification::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$qualification) {
+            return new JsonResponse(['error' => 'Qualification not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->entityManager->remove($qualification);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Qualification deleted successfully']);
+    }
+
+    #[Route('/documents', name: 'get_documents', methods: ['GET'])]
+    public function getDocuments(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse([]);
+        }
+
+        $documents = $profile->getDocuments();
+        $data = [];
+        foreach ($documents as $document) {
+            $data[] = [
+                'id' => $document->getId(),
+                'type' => $document->getType(),
+                'category' => $document->getCategory(),
+                'title' => $document->getTitle(),
+                'filename' => $document->getFilename(),
+                'originalFilename' => $document->getOriginalFilename(),
+                'mimeType' => $document->getMimeType(),
+                'fileSize' => $document->getFileSize(),
+                'fileSizeFormatted' => $document->getFileSizeFormatted(),
+                'status' => $document->getStatus(),
+                'validationStatus' => $document->getValidationStatus(),
+                'validationNotes' => $document->getValidationNotes(),
+                'validatedBy' => $document->getValidatedBy(),
+                'validatedAt' => $document->getValidatedAt()?->format('Y-m-d H:i:s'),
+                'description' => $document->getDescription(),
+                'expiryDate' => $document->getExpiryDate()?->format('Y-m-d'),
+                'rejectionReason' => $document->getRejectionReason(),
+                'fileUrl' => '/uploads/documents/' . $document->getFilename(),
+                'createdAt' => $document->getCreatedAt()->format('Y-m-d H:i:s'),
+                'updatedAt' => $document->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        return new JsonResponse($data);
+    }
+
+    #[Route('/applications', name: 'get_applications', methods: ['GET'])]
+    public function getApplications(): JsonResponse
+    {
+
+
+        return new JsonResponse();
+    }
+
+    #[Route('/shortlist', name: 'get_shortlist', methods: ['GET'])]
+    public function getShortlist(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $shortlistEntries = $this->shortlistRepository->findByUser($user);
+
+        $programs = [];
+        $establishments = [];
+
+        foreach ($shortlistEntries as $entry) {
+            if ($entry->getProgram()) {
+                $program = $entry->getProgram();
+                $programs[] = [
+                    'id' => $program->getId(),
+                    'name' => $program->getName(),
+                    'nameFr' => $program->getNameFr(),
+                    'slug' => $program->getSlug(),
+                    'degree' => $program->getDegree(),
+                    'duration' => $program->getDuration(),
+                    'studyType' => $program->getStudyType(),
+                    'studyLevel' => $program->getStudyLevel(),
+                    'subject' => $program->getSubject(),
+                    'field' => $program->getField(),
+                    'language' => $program->getLanguage(),
+                    'tuitionAmount' => $program->getTuitionAmount(),
+                    'tuitionCurrency' => $program->getTuitionCurrency(),
+                    'startDate' => $program->getStartDate()?->format('Y-m-d'),
+                    'applicationDeadline' => $program->getApplicationDeadline()?->format('Y-m-d'),
+                    'scholarships' => $program->isScholarships(),
+                    'featured' => $program->isFeatured(),
+                    'aidvisorRecommended' => $program->isAidvisorRecommended(),
+                    'easyApply' => $program->isEasyApply(),
+                    'ranking' => $program->getRanking(),
+                    'rating' => $program->getRating(),
+                    'universityType' => $program->getUniversityType(),
+                    'isActive' => $program->isActive(),
+                    'establishment' => [
+                        'id' => $program->getEstablishment()?->getId(),
+                        'name' => $program->getEstablishment()?->getName(),
+                        'nameFr' => $program->getEstablishment()?->getNameFr(),
+                        'slug' => $program->getEstablishment()?->getSlug(),
+                        'logo' => $program->getEstablishment()?->getLogo(),
+                        'country' => $program->getEstablishment()?->getCountry(),
+                        'city' => $program->getEstablishment()?->getCity(),
+                        'type' => $program->getEstablishment()?->getType(),
+                        'rating' => $program->getEstablishment()?->getRating(),
+                        'worldRanking' => $program->getEstablishment()?->getWorldRanking(),
+                    ],
+                    'shortlistedAt' => $entry->getCreatedAt()->format('Y-m-d H:i:s')
+                ];
+            }
+
+            if ($entry->getEstablishment()) {
+                $establishment = $entry->getEstablishment();
+                $establishments[] = [
+                    'id' => $establishment->getId(),
+                    'name' => $establishment->getName(),
+                    'nameFr' => $establishment->getNameFr(),
+                    'slug' => $establishment->getSlug(),
+                    'logo' => $establishment->getLogo(),
+                    'country' => $establishment->getCountry(),
+                    'city' => $establishment->getCity(),
+                    'type' => $establishment->getType(),
+                    'rating' => $establishment->getRating(),
+                    'worldRanking' => $establishment->getWorldRanking(),
+                    'students' => $establishment->getStudents(),
+                    'programs' => $establishment->getProgramsList() ? count($establishment->getProgramsList()) : 0,
+                    'tuitionMin' => $establishment->getTuitionMin(),
+                    'tuitionMax' => $establishment->getTuitionMax(),
+                    'tuitionCurrency' => $establishment->getTuitionCurrency(),
+                    'featured' => $establishment->isFeatured(),
+                    'sponsored' => $establishment->isSponsored(),
+                    'aidvisorRecommended' => $establishment->isAidvisorRecommended(),
+                    'freeApplications' => $establishment->getFreeApplications(),
+                    'universityType' => $establishment->getUniversityType(),
+                    'shortlistedAt' => $entry->getCreatedAt()->format('Y-m-d H:i:s')
+                ];
+            }
+        }
+
+        return new JsonResponse([
+            'programs' => $programs,
+            'establishments' => $establishments
+        ]);
+    }
+
+    private function createDefaultProfile(User $user): UserProfile
+    {
+        $profile = new UserProfile();
+        $profile->setUser($user);
+        $profile->setFirstName($user->getFirstName());
+        $profile->setLastName($user->getLastName());
+
+        // Set default values
+        $profile->setCountry('Morocco');
+        $profile->setCity('Casablanca');
+        $profile->setNationality('Morocco');
+        $profile->setStudyLevel('Postgraduate');
+        $profile->setFieldOfStudy('Finance');
+        $profile->setPreferredCountry('United Kingdom');
+        $profile->setStartDate('September 2025');
+        $profile->setPreferredCurrency('USD');
+        $profile->setScholarshipRequired(true);
+        $profile->setLanguagePreferences(['english']);
+        $profile->setOnboardingProgress([
+            'account_creation' => true,
+            'email_verification' => true,
+            'edvisor_test' => false,
+            'search_shortlist' => false,
+            'apply_choice' => false,
+            'fill_information' => true,
+            'degrees_qualifications' => false,
+            'documents_preferences' => false
+        ]);
+
+        $this->entityManager->persist($profile);
+        $this->entityManager->flush();
+
+        return $profile;
+    }
+
+    #[Route('/documents', name: 'add_document', methods: ['POST'])]
+    public function addDocument(Request $request): JsonResponse
+    {
+        try {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $profile = $user->getProfile();
+            if (!$profile) {
+                $profile = $this->createDefaultProfile($user);
+            }
+
+            $uploadedFile = $request->files->get('file');
+            if (!$uploadedFile) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Aucun fichier fourni'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Vérifier que le fichier a été uploadé correctement
+            if (!$uploadedFile->isValid()) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'upload du fichier: ' . $uploadedFile->getErrorMessage()
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Vérifier que le fichier existe
+            if (!$uploadedFile->getPathname() || !file_exists($uploadedFile->getPathname())) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Fichier temporaire non trouvé'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Vérification de la taille (10MB max)
+            $maxSize = 10 * 1024 * 1024; // 10MB en bytes
+            $fileSize = $uploadedFile->getSize();
+            if ($fileSize === false || $fileSize > $maxSize) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Le fichier est trop volumineux. Taille maximum autorisée: 10MB'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Vérification du type de fichier
+            $allowedTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'image/jpg',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain'
+            ];
+            $mimeType = $uploadedFile->getMimeType();
+            if (!$mimeType || !in_array($mimeType, $allowedTypes)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Type de fichier non autorisé. Types acceptés: PDF, JPG, PNG, DOC, DOCX, TXT'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Créer le répertoire de stockage s'il n'existe pas
+            $uploadDir = $this->getProjectDir() . '/public/uploads/documents/';
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    throw new \Exception('Impossible de créer le répertoire de stockage: ' . $uploadDir);
+                }
+            }
+
+            // Vérifier que le répertoire est accessible en écriture
+            if (!is_writable($uploadDir)) {
+                throw new \Exception('Le répertoire de stockage n\'est pas accessible en écriture: ' . $uploadDir);
+            }
+
+            // Générer un nom de fichier unique
+            $originalName = $uploadedFile->getClientOriginalName();
+            $extension = $uploadedFile->guessExtension();
+            $fileName = uniqid('doc_', true) . '.' . $extension;
+            $filePath = $uploadDir . $fileName;
+
+            // Déplacer le fichier
+            try {
+                // Méthode alternative : copier le contenu du fichier
+                $fileContent = file_get_contents($uploadedFile->getPathname());
+                if ($fileContent === false) {
+                    throw new \Exception('Impossible de lire le contenu du fichier');
+                }
+
+                // Écrire le contenu dans le nouveau fichier
+                $bytesWritten = file_put_contents($filePath, $fileContent);
+                if ($bytesWritten === false) {
+                    $error = error_get_last();
+                    throw new \Exception('Impossible d\'écrire le fichier: ' . ($error['message'] ?? 'Erreur inconnue') . ' - Chemin: ' . $filePath);
+                }
+
+                // Vérifier que le fichier a été créé correctement
+                if (!file_exists($filePath)) {
+                    throw new \Exception('Le fichier n\'a pas été créé');
+                }
+
+                // Vérifier la taille du fichier créé
+                $actualFileSize = filesize($filePath);
+                if ($actualFileSize !== $fileSize) {
+                    throw new \Exception('La taille du fichier ne correspond pas');
+                }
+            } catch (\Exception $e) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors du déplacement du fichier: ' . $e->getMessage()
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            // Créer le document
+            $document = new Document();
+            $document->setUserProfile($profile);
+            $document->setType($request->request->get('type', 'academic'));
+            $document->setCategory($request->request->get('category', 'other'));
+            $document->setTitle($request->request->get('title', $originalName));
+            $document->setFilename($fileName);
+            $document->setOriginalFilename($originalName);
+            $document->setMimeType($mimeType);
+            $document->setFileSize($fileSize);
+            $document->setStatus('uploaded');
+            $document->setValidationStatus('under_review'); // Automatiquement en révision après upload
+            $document->setDescription($request->request->get('description'));
+
+            if ($request->request->get('expiryDate')) {
+                $document->setExpiryDate(new \DateTime($request->request->get('expiryDate')));
+            }
+
+            $this->entityManager->persist($document);
+            $this->entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Fichier uploadé avec succès',
+                'data' => [
+                    'id' => $document->getId(),
+                    'type' => $document->getType(),
+                    'category' => $document->getCategory(),
+                    'title' => $document->getTitle(),
+                    'filename' => $document->getFilename(),
+                    'originalFilename' => $document->getOriginalFilename(),
+                    'mimeType' => $document->getMimeType(),
+                    'fileSize' => $document->getFileSize(),
+                    'fileSizeFormatted' => $document->getFileSizeFormatted(),
+                    'status' => $document->getStatus(),
+                    'validationStatus' => $document->getValidationStatus(),
+                    'validationNotes' => $document->getValidationNotes(),
+                    'validatedBy' => $document->getValidatedBy(),
+                    'validatedAt' => $document->getValidatedAt()?->format('Y-m-d H:i:s'),
+                    'description' => $document->getDescription(),
+                    'expiryDate' => $document->getExpiryDate()?->format('Y-m-d'),
+                    'rejectionReason' => $document->getRejectionReason(),
+                    'fileUrl' => '/uploads/documents/' . $fileName,
+                    'createdAt' => $document->getCreatedAt()->format('Y-m-d H:i:s'),
+                    'updatedAt' => $document->getUpdatedAt()->format('Y-m-d H:i:s'),
+                ]
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/documents/{id}', name: 'update_document', methods: ['PUT'])]
+    public function updateDocument(int $id, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $document = $this->entityManager->getRepository(Document::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$document) {
+            return new JsonResponse(['error' => 'Document not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['title'])) $document->setTitle($data['title']);
+        if (isset($data['description'])) $document->setDescription($data['description']);
+        if (isset($data['expiryDate'])) {
+            $document->setExpiryDate(new \DateTime($data['expiryDate']));
+        }
+        if (isset($data['status'])) $document->setStatus($data['status']);
+        if (isset($data['validationStatus'])) $document->setValidationStatus($data['validationStatus']);
+        if (isset($data['validationNotes'])) $document->setValidationNotes($data['validationNotes']);
+        if (isset($data['validatedBy'])) $document->setValidatedBy($data['validatedBy']);
+        if (isset($data['rejectionReason'])) $document->setRejectionReason($data['rejectionReason']);
+
+        // Si on met à jour le statut de validation, enregistrer la date et l'agent
+        if (isset($data['validationStatus']) && in_array($data['validationStatus'], ['approved', 'rejected'])) {
+            $document->setValidatedAt(new \DateTimeImmutable());
+            if (!$document->getValidatedBy()) {
+                $document->setValidatedBy($user->getEmail());
+            }
+        }
+
+        $document->setUpdatedAt(new \DateTimeImmutable());
+        $this->entityManager->flush();
+
+        $responseData = [
+            'id' => $document->getId(),
+            'type' => $document->getType(),
+            'category' => $document->getCategory(),
+            'title' => $document->getTitle(),
+            'filename' => $document->getFilename(),
+            'originalFilename' => $document->getOriginalFilename(),
+            'mimeType' => $document->getMimeType(),
+            'fileSize' => $document->getFileSize(),
+            'fileSizeFormatted' => $document->getFileSizeFormatted(),
+            'status' => $document->getStatus(),
+            'validationStatus' => $document->getValidationStatus(),
+            'validationNotes' => $document->getValidationNotes(),
+            'validatedBy' => $document->getValidatedBy(),
+            'validatedAt' => $document->getValidatedAt()?->format('Y-m-d H:i:s'),
+            'description' => $document->getDescription(),
+            'expiryDate' => $document->getExpiryDate()?->format('Y-m-d'),
+            'rejectionReason' => $document->getRejectionReason(),
+            'fileUrl' => '/uploads/documents/' . $document->getFilename(),
+            'createdAt' => $document->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $document->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($responseData);
+    }
+
+    #[Route('/documents/{id}', name: 'delete_document', methods: ['DELETE'])]
+    public function deleteDocument(int $id): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $document = $this->entityManager->getRepository(Document::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$document) {
+            return new JsonResponse(['error' => 'Document not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Supprimer le fichier physique
+        $filePath = $this->getProjectDir() . '/public/uploads/documents/' . $document->getFilename();
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        $this->entityManager->remove($document);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Document deleted successfully']);
+    }
+
+    #[Route('/documents/{id}/download', name: 'download_document', methods: ['GET'])]
+    public function downloadDocument(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $document = $this->entityManager->getRepository(Document::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$document) {
+            return new JsonResponse(['error' => 'Document not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $filePath = $this->getProjectDir() . '/public/uploads/documents/' . $document->getFilename();
+        if (!file_exists($filePath)) {
+            return new JsonResponse(['error' => 'File not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $response = new BinaryFileResponse($filePath);
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $document->getOriginalFilename()
+        );
+
+        return $response;
+    }
+
+    #[Route('/documents/{id}/view', name: 'view_document', methods: ['GET'])]
+    public function viewDocument(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $document = $this->entityManager->getRepository(Document::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$document) {
+            return new JsonResponse(['error' => 'Document not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $filePath = $this->getProjectDir() . '/public/uploads/documents/' . $document->getFilename();
+        if (!file_exists($filePath)) {
+            return new JsonResponse(['error' => 'File not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $response = new BinaryFileResponse($filePath);
+        $response->headers->set('Content-Type', $document->getMimeType());
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            $document->getOriginalFilename()
+        );
+
+        return $response;
+    }
+
+    #[Route('/applications', name: 'add_application', methods: ['POST'])]
+    public function addApplication(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            $profile = $this->createDefaultProfile($user);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $application = new Application();
+        $application->setUserProfile($profile);
+        $application->setUniversityName($data['universityName']);
+        $application->setProgramName($data['programName']);
+        $application->setCountry($data['country'] ?? null);
+        $application->setStatus($data['status'] ?? 'draft');
+        $application->setApplicationFee($data['applicationFee'] ?? null);
+        $application->setTuitionFee($data['tuitionFee'] ?? null);
+        $application->setNotes($data['notes'] ?? null);
+
+        if (isset($data['applicationDeadline'])) {
+            $application->setApplicationDeadline(new \DateTime($data['applicationDeadline']));
+        }
+        if (isset($data['startDate'])) {
+            $application->setStartDate(new \DateTime($data['startDate']));
+        }
+
+        $this->entityManager->persist($application);
+        $this->entityManager->flush();
+
+        $responseData = [
+            'id' => $application->getId(),
+            'universityName' => $application->getUniversityName(),
+            'programName' => $application->getProgramName(),
+            'country' => $application->getCountry(),
+            'status' => $application->getStatus(),
+            'applicationFee' => $application->getApplicationFee(),
+            'tuitionFee' => $application->getTuitionFee(),
+            'applicationDeadline' => $application->getApplicationDeadline()?->format('Y-m-d'),
+            'startDate' => $application->getStartDate()?->format('Y-m-d'),
+            'notes' => $application->getNotes(),
+            'createdAt' => $application->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $application->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($responseData, Response::HTTP_CREATED);
+    }
+
+    #[Route('/applications/{id}', name: 'delete_application', methods: ['DELETE'])]
+    public function deleteApplication(int $id): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $profile = $user->getProfile();
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $application = $this->entityManager->getRepository(Application::class)->findOneBy([
+            'id' => $id,
+            'userProfile' => $profile
+        ]);
+
+        if (!$application) {
+            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->entityManager->remove($application);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Application deleted successfully']);
+    }
+
+
+    private function serializeProfile(UserProfile $profile): array
+    {
+        return [
+            'id' => $profile->getId(),
+            'firstName' => $profile->getFirstName(),
+            'lastName' => $profile->getLastName(),
+            'fullName' => $profile->getFullName(),
+            'country' => $profile->getCountry(),
+            'city' => $profile->getCity(),
+            'nationality' => $profile->getNationality(),
+            'phone' => $profile->getPhone(),
+            'whatsapp' => $profile->getWhatsapp(),
+            'phoneCountry' => $profile->getPhoneCountry(),
+            'whatsappCountry' => $profile->getWhatsappCountry(),
+            'passportNumber' => $profile->getPassportNumber(),
+            'address' => $profile->getAddress(),
+            'postalCode' => $profile->getPostalCode(),
+            'dateOfBirth' => $profile->getDateOfBirth()?->format('Y-m-d'),
+            'avatar' => $profile->getAvatar(),
+            'studyLevel' => $profile->getStudyLevel(),
+            'fieldOfStudy' => $profile->getFieldOfStudy(),
+            'preferredCountry' => $profile->getPreferredCountry(),
+            'startDate' => $profile->getStartDate(),
+            'preferredCurrency' => $profile->getPreferredCurrency(),
+            'annualBudget' => $profile->getAnnualBudget(),
+            'scholarshipRequired' => $profile->isScholarshipRequired(),
+            'languagePreferences' => $profile->getLanguagePreferences(),
+            'onboardingProgress' => $profile->getOnboardingProgress(),
+            'preferredDestinations' => $profile->getPreferredDestinations(),
+            'preferredIntakes' => $profile->getPreferredIntakes(),
+            'preferredSubjects' => $profile->getPreferredSubjects(),
+            'createdAt' => $profile->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $profile->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+    }
+}
