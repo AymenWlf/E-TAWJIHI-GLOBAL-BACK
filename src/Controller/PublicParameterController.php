@@ -74,20 +74,39 @@ class PublicParameterController extends AbstractController
                     $groupedData[$categoryKey] = [];
                 }
 
-                $groupedData[$categoryKey][] = [
-                    'id' => $parameter->getId(),
-                    'category' => $parameter->getCategory(),
-                    'code' => $parameter->getCode(),
-                    'labelEn' => $parameter->getLabelEn(),
-                    'labelFr' => $parameter->getLabelFr(),
-                    'descriptionEn' => $parameter->getDescriptionEn(),
-                    'descriptionFr' => $parameter->getDescriptionFr(),
-                    'scoreRange' => $parameter->getScoreRange(),
-                    'meta' => $parameter->getMeta(),
-                    'parentCode' => $parameter->getParentCode(),
-                    'isActive' => $parameter->isActive(),
-                    'sortOrder' => $parameter->getSortOrder(),
-                ];
+                // Special handling for languages - return full name instead of code
+                if ($category === 'language') {
+                    $groupedData[$categoryKey][] = [
+                        'id' => $parameter->getId(),
+                        'category' => $parameter->getCategory(),
+                        'code' => $parameter->getLabelEn(), // Use full name as code
+                        'labelEn' => $parameter->getLabelEn(),
+                        'labelFr' => $parameter->getLabelFr(),
+                        'descriptionEn' => $parameter->getDescriptionEn(),
+                        'descriptionFr' => $parameter->getDescriptionFr(),
+                        'scoreRange' => $parameter->getScoreRange(),
+                        'meta' => $parameter->getMeta(),
+                        'parentCode' => $parameter->getParentCode(),
+                        'isActive' => $parameter->isActive(),
+                        'sortOrder' => $parameter->getSortOrder(),
+                        'flag' => $parameter->getMeta()['flag'] ?? '🌐', // Extract flag from meta
+                    ];
+                } else {
+                    $groupedData[$categoryKey][] = [
+                        'id' => $parameter->getId(),
+                        'category' => $parameter->getCategory(),
+                        'code' => $parameter->getCode(),
+                        'labelEn' => $parameter->getLabelEn(),
+                        'labelFr' => $parameter->getLabelFr(),
+                        'descriptionEn' => $parameter->getDescriptionEn(),
+                        'descriptionFr' => $parameter->getDescriptionFr(),
+                        'scoreRange' => $parameter->getScoreRange(),
+                        'meta' => $parameter->getMeta(),
+                        'parentCode' => $parameter->getParentCode(),
+                        'isActive' => $parameter->isActive(),
+                        'sortOrder' => $parameter->getSortOrder(),
+                    ];
+                }
             }
 
             // Ensure all categories are present (even if empty)

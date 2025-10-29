@@ -45,12 +45,6 @@ class Qualification
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $scoreType = null; // 'GPA', 'Percentage', 'Band', 'IELTS Academic', etc.
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $expiryDate = null;
-
-    #[ORM\Column(type: 'string', length: 20, nullable: true)]
-    private ?string $status = null; // 'valid', 'expired', 'pending'
-
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
@@ -75,6 +69,9 @@ class Qualification
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $exactQualificationName = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $expiryDate = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
@@ -203,28 +200,6 @@ class Qualification
         return $this;
     }
 
-    public function getExpiryDate(): ?\DateTimeInterface
-    {
-        return $this->expiryDate;
-    }
-
-    public function setExpiryDate(?\DateTimeInterface $expiryDate): self
-    {
-        $this->expiryDate = $expiryDate;
-        return $this;
-    }
-
-    public function getStatus(): ?string
-    {
-        return $this->status;
-    }
-
-    public function setStatus(?string $status): self
-    {
-        $this->status = $status;
-        return $this;
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
@@ -333,6 +308,17 @@ class Qualification
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function getExpiryDate(): ?\DateTimeInterface
+    {
+        return $this->expiryDate;
+    }
+
+    public function setExpiryDate(?\DateTimeInterface $expiryDate): self
+    {
+        $this->expiryDate = $expiryDate;
         return $this;
     }
 }

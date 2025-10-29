@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\DocumentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: DocumentRepository::class)]
 #[ORM\Table(name: 'documents')]
@@ -69,10 +71,20 @@ class Document
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $originalLanguage = null; // Langue du document original
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $etawjihiNotes = null; // Notes d'E-Tawjihi pour le document original
+
+    #[ORM\OneToMany(targetEntity: DocumentTranslation::class, mappedBy: 'originalDocument', cascade: ['persist', 'remove'])]
+    private Collection $translations;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
+        $this->translations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -275,6 +287,55 @@ class Document
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function getOriginalLanguage(): ?string
+    {
+        return $this->originalLanguage;
+    }
+
+    public function setOriginalLanguage(?string $originalLanguage): self
+    {
+        $this->originalLanguage = $originalLanguage;
+        return $this;
+    }
+
+    public function getEtawjihiNotes(): ?string
+    {
+        return $this->etawjihiNotes;
+    }
+
+    public function setEtawjihiNotes(?string $etawjihiNotes): self
+    {
+        $this->etawjihiNotes = $etawjihiNotes;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DocumentTranslation>
+     */
+    public function getTranslations(): Collection
+    {
+        return $this->translations;
+    }
+
+    public function addTranslation(DocumentTranslation $translation): self
+    {
+        if (!$this->translations->contains($translation)) {
+            $this->translations->add($translation);
+            $translation->setOriginalDocument($this);
+        }
+        return $this;
+    }
+
+    public function removeTranslation(DocumentTranslation $translation): self
+    {
+        if ($this->translations->removeElement($translation)) {
+            if ($translation->getOriginalDocument() === $this) {
+                $translation->setOriginalDocument(null);
+            }
+        }
         return $this;
     }
 

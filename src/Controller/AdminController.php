@@ -495,7 +495,10 @@ class AdminController extends AbstractController
         if (isset($data['country'])) $establishment->setCountry($data['country']);
         if (isset($data['city'])) $establishment->setCity($data['city']);
         if (isset($data['type'])) $establishment->setType($data['type']);
-        if (isset($data['rating'])) $establishment->setRating($data['rating']);
+        if (isset($data['rating'])) {
+            $rating = $data['rating'] === '' || $data['rating'] === null ? null : (float)$data['rating'];
+            $establishment->setRating($rating);
+        }
         if (isset($data['students'])) $establishment->setStudents($data['students'] === '' ? null : (int)$data['students']);
         if (isset($data['programs'])) $establishment->setPrograms($data['programs'] === '' ? null : (int)$data['programs']);
         if (isset($data['logo'])) $establishment->setLogo($data['logo']);
@@ -506,11 +509,23 @@ class AdminController extends AbstractController
         if (isset($data['foundedYear'])) $establishment->setFoundedYear($data['foundedYear'] === '' ? null : (int)$data['foundedYear']);
         if (isset($data['featured'])) $establishment->setFeatured($data['featured']);
         if (isset($data['sponsored'])) $establishment->setSponsored($data['sponsored']);
-        if (isset($data['tuition'])) $establishment->setTuition($data['tuition']);
-        if (isset($data['tuitionMin'])) $establishment->setTuitionMin($data['tuitionMin']);
-        if (isset($data['tuitionMax'])) $establishment->setTuitionMax($data['tuitionMax']);
+        if (isset($data['tuition'])) {
+            $tuition = $data['tuition'] === '' || $data['tuition'] === null ? null : $data['tuition'];
+            $establishment->setTuition($tuition);
+        }
+        if (isset($data['tuitionMin'])) {
+            $tuitionMin = $data['tuitionMin'] === '' || $data['tuitionMin'] === null ? null : $data['tuitionMin'];
+            $establishment->setTuitionMin($tuitionMin);
+        }
+        if (isset($data['tuitionMax'])) {
+            $tuitionMax = $data['tuitionMax'] === '' || $data['tuitionMax'] === null ? null : $data['tuitionMax'];
+            $establishment->setTuitionMax($tuitionMax);
+        }
         if (isset($data['tuitionCurrency'])) $establishment->setTuitionCurrency($data['tuitionCurrency']);
-        if (isset($data['acceptanceRate'])) $establishment->setAcceptanceRate($data['acceptanceRate']);
+        if (isset($data['acceptanceRate'])) {
+            $acceptanceRate = $data['acceptanceRate'] === '' || $data['acceptanceRate'] === null ? null : (float)$data['acceptanceRate'];
+            $establishment->setAcceptanceRate($acceptanceRate);
+        }
         if (isset($data['worldRanking'])) $establishment->setWorldRanking($data['worldRanking'] === '' ? null : (int)$data['worldRanking']);
         if (isset($data['qsRanking'])) $establishment->setQsRanking($data['qsRanking'] === '' ? null : (int)$data['qsRanking']);
         if (isset($data['timesRanking'])) $establishment->setTimesRanking($data['timesRanking'] === '' ? null : (int)$data['timesRanking']);
@@ -529,7 +544,10 @@ class AdminController extends AbstractController
         if (isset($data['aidvisorRecommended'])) $establishment->setAidvisorRecommended($data['aidvisorRecommended']);
         if (isset($data['easyApply'])) $establishment->setEasyApply($data['easyApply']);
         if (isset($data['universityType'])) $establishment->setUniversityType($data['universityType']);
-        if (isset($data['commissionRate'])) $establishment->setCommissionRate($data['commissionRate']);
+        if (isset($data['commissionRate'])) {
+            $commissionRate = $data['commissionRate'] === '' || $data['commissionRate'] === null ? null : (float)$data['commissionRate'];
+            $establishment->setCommissionRate($commissionRate);
+        }
         if (isset($data['freeApplications'])) $establishment->setFreeApplications($data['freeApplications'] === '' ? null : (int)$data['freeApplications']);
         if (isset($data['visaSupport'])) $establishment->setVisaSupport($data['visaSupport']);
         if (isset($data['countrySpecific'])) $establishment->setCountrySpecific($data['countrySpecific']);
@@ -781,7 +799,10 @@ class AdminController extends AbstractController
         if (isset($data['durationUnit'])) $program->setDurationUnit($data['durationUnit']);
         if (isset($data['language'])) $program->setLanguage($data['language']);
         if (isset($data['tuition'])) $program->setTuition($data['tuition']);
-        if (isset($data['tuitionAmount'])) $program->setTuitionAmount($data['tuitionAmount']);
+        if (isset($data['tuitionAmount'])) {
+            $tuitionAmount = $data['tuitionAmount'] === '' || $data['tuitionAmount'] === null ? null : (float)$data['tuitionAmount'];
+            $program->setTuitionAmount($tuitionAmount);
+        }
         if (isset($data['tuitionCurrency'])) $program->setTuitionCurrency($data['tuitionCurrency']);
         if (isset($data['startDate'])) $program->setStartDate($data['startDate'] ? new \DateTime($data['startDate']) : null);
         if (isset($data['startYear'])) $program->setStartYear($data['startYear']);
@@ -806,6 +827,8 @@ class AdminController extends AbstractController
         if (isset($data['intakes'])) $program->setIntakes($data['intakes']);
         if (isset($data['subjects'])) $program->setSubjects($data['subjects']);
         if (isset($data['studyLevels'])) $program->setStudyLevels($data['studyLevels']);
+        if (isset($data['description'])) $program->setDescription($data['description']);
+        if (isset($data['descriptionFr'])) $program->setDescriptionFr($data['descriptionFr']);
         if (isset($data['curriculum'])) $program->setCurriculum($data['curriculum']);
         if (isset($data['curriculumFr'])) $program->setCurriculumFr($data['curriculumFr']);
         if (isset($data['careerProspects'])) $program->setCareerProspects($data['careerProspects']);
@@ -819,11 +842,20 @@ class AdminController extends AbstractController
         // Qualifications / GPA
         if (isset($data['academicQualifications'])) $program->setAcademicQualifications($data['academicQualifications']);
         if (isset($data['gradeRequirements'])) $program->setGradeRequirements($data['gradeRequirements']);
-        if (isset($data['minimumGrade'])) $program->setMinimumGrade($data['minimumGrade']);
+        if (isset($data['minimumGrade'])) {
+            $minimumGrade = $data['minimumGrade'] === '' || $data['minimumGrade'] === null ? null : (float)$data['minimumGrade'];
+            $program->setMinimumGrade($minimumGrade);
+        }
         if (isset($data['gradeSystem'])) $program->setGradeSystem($data['gradeSystem']);
         if (isset($data['requiresAcademicQualification'])) $program->setRequiresAcademicQualification((bool) $data['requiresAcademicQualification']);
-        if (isset($data['gpaScale'])) $program->setGpaScale($data['gpaScale']);
-        if (isset($data['gpaScore'])) $program->setGpaScore($data['gpaScore']);
+        if (isset($data['gpaScale'])) {
+            $gpaScale = $data['gpaScale'] === '' || $data['gpaScale'] === null ? null : (float)$data['gpaScale'];
+            $program->setGpaScale($gpaScale);
+        }
+        if (isset($data['gpaScore'])) {
+            $gpaScore = $data['gpaScore'] === '' || $data['gpaScore'] === null ? null : (float)$data['gpaScore'];
+            $program->setGpaScore($gpaScore);
+        }
         if (isset($data['requiresGPA'])) $program->setRequiresGPA((bool) $data['requiresGPA']);
         if (isset($data['structuredRequirements'])) $program->setStructuredRequirements($data['structuredRequirements']);
 

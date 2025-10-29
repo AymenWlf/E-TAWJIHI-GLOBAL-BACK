@@ -54,9 +54,10 @@ class ProgramDetailController extends AbstractController
     }
 
     #[Route('/{id}', name: 'detail', methods: ['GET'])]
-    public function getProgramDetail(int $id, Request $request): JsonResponse
+    public function getProgramDetail(string $id, Request $request): JsonResponse
     {
-        $program = $this->programRepository->find($id);
+        $programId = (int) $id;
+        $program = $this->programRepository->find($programId);
 
         if (!$program || !$program->isActive()) {
             throw new NotFoundHttpException('Program not found');

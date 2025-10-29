@@ -7,17 +7,15 @@ use App\Entity\Program;
 use App\Entity\User;
 use App\Repository\ApplicationRepository;
 use App\Repository\ProgramRepository;
-use App\Service\ApplicationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
 
-#[Route('/api/applications', name: 'app_application_')]
+#[Route('/api/applications', name: 'api_applications_')]
 #[IsGranted('ROLE_USER')]
 class ApplicationController extends AbstractController
 {
@@ -25,362 +23,248 @@ class ApplicationController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ApplicationRepository $applicationRepository,
         private ProgramRepository $programRepository,
-        private ApplicationService $applicationService,
         private SerializerInterface $serializer
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
-    public function getApplications(): JsonResponse
+    public function list(): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
 
         $applications = $this->applicationRepository->findByUser($user);
 
-        $data = [];
-        foreach ($applications as $application) {
-            $data[] = $this->serializeApplication($application);
-        }
-
-        return new JsonResponse($data);
+        return new JsonResponse([
+            'success' => true,
+            'data' => json_decode($this->serializer->serialize($applications, 'json', ['groups' => ['application:list']]), true)
+        ]);
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function getApplication(int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
 
-        $application = $this->applicationRepository->find($id);
-        if (!$application || $application->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
-        }
+        $application = $this->applicationRepository->findByIdAndUser($id, $user);
 
-        $progress = $this->applicationService->getApplicationProgress($application);
-
-        return new JsonResponse([
-            'application' => $this->serializeApplication($application),
-            'progress' => $progress
-        ]);
-    }
-
-    #[Route('/by-program/{programId}', name: 'get_by_program', methods: ['GET'])]
-    public function getApplicationByProgram(int $programId): JsonResponse
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $program = $this->programRepository->find($programId);
-        if (!$program) {
-            return new JsonResponse(['error' => 'Program not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $application = $this->applicationRepository->findUserApplicationForProgram($user, $program);
         if (!$application) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Application not found'
+            ], 404);
         }
 
-        $progress = $this->applicationService->getApplicationProgress($application);
-
         return new JsonResponse([
-            'application' => $this->serializeApplication($application),
-            'progress' => $progress
+            'success' => true,
+            'data' => json_decode($this->serializer->serialize($application, 'json', ['groups' => ['application:read']]), true)
         ]);
     }
 
-    #[Route('', name: 'create', methods: ['POST'])]
-    public function createApplication(Request $request): JsonResponse
+    #[Route('/program/{programId}', name: 'create_or_get', methods: ['POST'])]
+    public function createOrGet(int $programId, Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $data = json_decode($request->getContent(), true);
-        $programId = $data['programId'] ?? null;
-
-        if (!$programId) {
-            return new JsonResponse(['error' => 'Program ID is required'], Response::HTTP_BAD_REQUEST);
-        }
 
         $program = $this->programRepository->find($programId);
         if (!$program) {
-            return new JsonResponse(['error' => 'Program not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        // Check if program is type A
-        if ($program->getUniversityType() !== 'A') {
-            return new JsonResponse(['error' => 'Application system is only available for type A programs'], Response::HTTP_BAD_REQUEST);
-        }
-
-        try {
-            $application = $this->applicationService->createApplication($user, $program);
-
             return new JsonResponse([
-                'message' => 'Application created successfully',
-                'application' => $this->serializeApplication($application)
-            ], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
-
-    #[Route('/{id}/steps/{stepNumber}', name: 'update_step', methods: ['PUT'])]
-    public function updateApplicationStep(int $id, int $stepNumber, Request $request): JsonResponse
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+                'success' => false,
+                'message' => 'Program not found'
+            ], 404);
         }
 
-        $application = $this->applicationRepository->find($id);
-        if (!$application || $application->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
-        }
+        // Check if there's already an active application for this program
+        $existingApplication = $this->applicationRepository->findActiveByUserAndProgram($user, $program);
 
-        $data = json_decode($request->getContent(), true);
-
-        try {
-            $step = $this->applicationService->updateApplicationStep($application, $stepNumber, $data);
-
+        if ($existingApplication) {
             return new JsonResponse([
-                'message' => 'Step updated successfully',
-                'step' => $this->serializeApplicationStep($step),
-                'application' => $this->serializeApplication($application)
+                'success' => true,
+                'data' => json_decode($this->serializer->serialize($existingApplication, 'json', ['groups' => ['application:read']]), true),
+                'isExisting' => true
             ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
+
+        // Create new application
+        $application = new Application();
+        $application->setUser($user);
+        $application->setProgram($program);
+
+        // Set language from request or user preference
+        $requestData = json_decode($request->getContent(), true);
+        $language = $requestData['language'] ?? $user->getPreferredLanguage() ?? 'en';
+
+        // Store language in applicationData
+        $applicationData = [
+            'language' => $language,
+            'personalInfo' => [],
+            'academicInfo' => [],
+            'documents' => [],
+            'preferences' => [],
+            'qualifications' => [],
+            'preAdmission' => [],
+            'enrollment' => [],
+            'finalOffer' => [],
+            'visaApplication' => [],
+            'enroll' => []
+        ];
+        $application->setApplicationData($applicationData);
+
+        $this->entityManager->persist($application);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'data' => json_decode($this->serializer->serialize($application, 'json', ['groups' => ['application:read']]), true),
+            'isExisting' => false
+        ]);
     }
 
-    #[Route('/{id}/agent', name: 'assign_agent', methods: ['POST'])]
-    public function assignAgent(int $id, Request $request): JsonResponse
+    #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    public function update(int $id, Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+
+        $application = $this->applicationRepository->findByIdAndUser($id, $user);
+
+        if (!$application) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Application not found'
+            ], 404);
         }
 
-        $application = $this->applicationRepository->find($id);
-        if (!$application || $application->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
+        $requestData = json_decode($request->getContent(), true);
+
+        // Get current application data
+        $applicationData = $application->getApplicationData() ?? [];
+
+        // Update application data fields
+        if (isset($requestData['personalInfo'])) {
+            $applicationData['personalInfo'] = $requestData['personalInfo'];
         }
 
-        $data = json_decode($request->getContent(), true);
-        $agentId = $data['agentId'] ?? null;
-        $agentCode = $data['agentCode'] ?? null;
+        if (isset($requestData['academicInfo'])) {
+            $applicationData['academicInfo'] = $requestData['academicInfo'];
+        }
 
-        try {
-            $agent = null;
-            if ($agentId) {
-                $agent = $this->entityManager->getRepository(User::class)->find($agentId);
-                if (!$agent) {
-                    return new JsonResponse(['error' => 'Agent not found'], Response::HTTP_NOT_FOUND);
-                }
+        if (isset($requestData['documents'])) {
+            $applicationData['documents'] = $requestData['documents'];
+        }
+
+        if (isset($requestData['preferences'])) {
+            $applicationData['preferences'] = $requestData['preferences'];
+        }
+
+        if (isset($requestData['preAdmission'])) {
+            $applicationData['preAdmission'] = $requestData['preAdmission'];
+        }
+
+        if (isset($requestData['enrollment'])) {
+            $applicationData['enrollment'] = $requestData['enrollment'];
+        }
+
+        if (isset($requestData['finalOffer'])) {
+            $applicationData['finalOffer'] = $requestData['finalOffer'];
+        }
+
+        if (isset($requestData['visaApplication'])) {
+            $applicationData['visaApplication'] = $requestData['visaApplication'];
+        }
+
+        if (isset($requestData['enroll'])) {
+            $applicationData['enroll'] = $requestData['enroll'];
+        }
+
+        if (isset($requestData['language'])) {
+            $applicationData['language'] = $requestData['language'];
+        }
+
+        // Update application data
+        $application->setApplicationData($applicationData);
+
+        // Update status
+        if (isset($requestData['status'])) {
+            $application->setStatus($requestData['status']);
+
+            // Set submitted date and duplicate data if status is submitted
+            if ($requestData['status'] === 'submitted' && !$application->getSubmittedAt()) {
+                // Duplicate applicationData to submittedData (excluding documents and qualifications)
+                $currentApplicationData = $application->getApplicationData() ?? [];
+                $submittedData = $currentApplicationData;
+
+                // Remove documents and qualifications from submittedData
+                unset($submittedData['documents']);
+                unset($submittedData['qualifications']);
+
+                $application->setSubmittedData($submittedData);
+                $application->setSubmittedAt(new \DateTimeImmutable());
             }
-
-            $assignment = $this->applicationService->assignAgent($application, $agent, $agentCode);
-
-            return new JsonResponse([
-                'message' => 'Agent assigned successfully',
-                'assignment' => $this->serializeAgentAssignment($assignment),
-                'application' => $this->serializeApplication($application)
-            ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
+
+        $application->updateTimestamp();
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'data' => json_decode($this->serializer->serialize($application, 'json', ['groups' => ['application:read']]), true)
+        ]);
     }
 
-    #[Route('/{id}/documents', name: 'upload_document', methods: ['POST'])]
-    public function uploadDocument(int $id, Request $request): JsonResponse
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(int $id): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
 
-        $application = $this->applicationRepository->find($id);
-        if (!$application || $application->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
-        }
+        $application = $this->applicationRepository->findByIdAndUser($id, $user);
 
-        $documentType = $request->request->get('documentType');
-        $uploadedFile = $request->files->get('file');
-
-        if (!$documentType || !$uploadedFile) {
-            return new JsonResponse(['error' => 'Document type and file are required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        // Validate file
-        $allowedTypes = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-        $fileExtension = strtolower($uploadedFile->getClientOriginalExtension());
-
-        if (!in_array($fileExtension, $allowedTypes)) {
-            return new JsonResponse(['error' => 'Invalid file type. Allowed types: ' . implode(', ', $allowedTypes)], Response::HTTP_BAD_REQUEST);
-        }
-
-        if ($uploadedFile->getSize() > 10 * 1024 * 1024) { // 10MB limit
-            return new JsonResponse(['error' => 'File size too large. Maximum size is 10MB'], Response::HTTP_BAD_REQUEST);
-        }
-
-        try {
-            // Generate unique filename
-            $fileName = uniqid() . '.' . $fileExtension;
-            $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/applications/';
-
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-
-            $uploadedFile->move($uploadDir, $fileName);
-
-            $fileData = [
-                'fileName' => $uploadedFile->getClientOriginalName(),
-                'filePath' => '/uploads/applications/' . $fileName,
-                'mimeType' => $uploadedFile->getMimeType(),
-                'fileSize' => $uploadedFile->getSize()
-            ];
-
-            $document = $this->applicationService->uploadDocument($application, $documentType, $fileData);
-
+        if (!$application) {
             return new JsonResponse([
-                'message' => 'Document uploaded successfully',
-                'document' => $this->serializeApplicationDocument($document)
-            ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+                'success' => false,
+                'message' => 'Application not found'
+            ], 404);
         }
+
+        // Only allow deletion of draft applications
+        if ($application->getStatus() !== 'draft') {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Only draft applications can be deleted'
+            ], 400);
+        }
+
+        $this->entityManager->remove($application);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Application deleted successfully'
+        ]);
     }
 
-    #[Route('/{id}/submit', name: 'submit', methods: ['POST'])]
-    public function submitApplication(int $id): JsonResponse
+    #[Route('/check/{programId}', name: 'check', methods: ['GET'])]
+    public function check(int $programId): JsonResponse
     {
+        /** @var User $user */
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
 
-        $application = $this->applicationRepository->find($id);
-        if (!$application || $application->getUser() !== $user) {
-            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        try {
-            $application = $this->applicationService->submitApplication($application);
-
+        $program = $this->programRepository->find($programId);
+        if (!$program) {
             return new JsonResponse([
-                'message' => 'Application submitted successfully',
-                'application' => $this->serializeApplication($application)
-            ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+                'success' => false,
+                'message' => 'Program not found'
+            ], 404);
         }
-    }
 
-    #[Route('/steps/config', name: 'steps_config', methods: ['GET'])]
-    public function getStepsConfiguration(): JsonResponse
-    {
-        $configurations = $this->applicationService->getAllStepConfigurations();
+        $existingApplication = $this->applicationRepository->findActiveByUserAndProgram($user, $program);
 
-        return new JsonResponse($configurations);
-    }
-
-    private function serializeApplication(Application $application): array
-    {
-        return [
-            'id' => $application->getId(),
-            'status' => $application->getStatus(),
-            'currentStep' => $application->getCurrentStep(),
-            'progressPercentage' => $application->getProgressPercentage(),
-            'notes' => $application->getNotes(),
-            'createdAt' => $application->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt' => $application->getUpdatedAt()->format('Y-m-d H:i:s'),
-            'submittedAt' => $application->getSubmittedAt()?->format('Y-m-d H:i:s'),
-            'program' => [
-                'id' => $application->getProgram()->getId(),
-                'name' => $application->getProgram()->getName(),
-                'nameFr' => $application->getProgram()->getNameFr(),
-                'slug' => $application->getProgram()->getSlug(),
-                'establishment' => [
-                    'id' => $application->getProgram()->getEstablishment()->getId(),
-                    'name' => $application->getProgram()->getEstablishment()->getName(),
-                    'nameFr' => $application->getProgram()->getEstablishment()->getNameFr(),
-                    'slug' => $application->getProgram()->getEstablishment()->getSlug(),
-                ]
-            ],
-            'agent' => $application->getAgent() ? [
-                'id' => $application->getAgent()->getId(),
-                'email' => $application->getAgent()->getEmail(),
-                'firstName' => $application->getAgent()->getFirstName(),
-                'lastName' => $application->getAgent()->getLastName(),
-            ] : null
-        ];
-    }
-
-    private function serializeApplicationStep($step): array
-    {
-        return [
-            'id' => $step->getId(),
-            'stepNumber' => $step->getStepNumber(),
-            'stepName' => $step->getStepName(),
-            'stepTitle' => $step->getStepTitle(),
-            'description' => $step->getDescription(),
-            'isCompleted' => $step->isCompleted(),
-            'completedAt' => $step->getCompletedAt()?->format('Y-m-d H:i:s'),
-            'stepData' => $step->getStepData(),
-            'notes' => $step->getNotes(),
-            'requiredDocuments' => $step->getRequiredDocuments(),
-            'validationErrors' => $step->getValidationErrors(),
-            'createdAt' => $step->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt' => $step->getUpdatedAt()->format('Y-m-d H:i:s')
-        ];
-    }
-
-    private function serializeApplicationDocument($document): array
-    {
-        return [
-            'id' => $document->getId(),
-            'documentType' => $document->getDocumentType(),
-            'fileName' => $document->getFileName(),
-            'filePath' => $document->getFilePath(),
-            'mimeType' => $document->getMimeType(),
-            'fileSize' => $document->getFileSize(),
-            'formattedFileSize' => $document->getFormattedFileSize(),
-            'status' => $document->getStatus(),
-            'notes' => $document->getNotes(),
-            'rejectionReason' => $document->getRejectionReason(),
-            'uploadedAt' => $document->getUploadedAt()->format('Y-m-d H:i:s'),
-            'reviewedAt' => $document->getReviewedAt()?->format('Y-m-d H:i:s'),
-            'reviewedBy' => $document->getReviewedBy() ? [
-                'id' => $document->getReviewedBy()->getId(),
-                'email' => $document->getReviewedBy()->getEmail(),
-                'firstName' => $document->getReviewedBy()->getFirstName(),
-                'lastName' => $document->getReviewedBy()->getLastName(),
-            ] : null
-        ];
-    }
-
-    private function serializeAgentAssignment($assignment): array
-    {
-        return [
-            'id' => $assignment->getId(),
-            'status' => $assignment->getStatus(),
-            'agentCode' => $assignment->getAgentCode(),
-            'notes' => $assignment->getNotes(),
-            'assignedAt' => $assignment->getAssignedAt()->format('Y-m-d H:i:s'),
-            'completedAt' => $assignment->getCompletedAt()?->format('Y-m-d H:i:s'),
-            'agent' => [
-                'id' => $assignment->getAgent()->getId(),
-                'email' => $assignment->getAgent()->getEmail(),
-                'firstName' => $assignment->getAgent()->getFirstName(),
-                'lastName' => $assignment->getAgent()->getLastName(),
-            ]
-        ];
+        return new JsonResponse([
+            'success' => true,
+            'hasActiveApplication' => $existingApplication !== null,
+            'application' => $existingApplication ? json_decode($this->serializer->serialize($existingApplication, 'json', ['groups' => ['application:read']]), true) : null
+        ]);
     }
 }

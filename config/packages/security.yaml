@@ -27,8 +27,16 @@ security:
       stateless: true
       jwt: ~
     main:
+      pattern: ^/
       lazy: true
       provider: app_user_provider
+      form_login:
+        login_path: /login
+        check_path: /login_check
+        default_target_path: /
+      logout:
+        path: /logout
+        target: /
 
   # Easy way to control access for large sections of your site
   # Note: Only the *first* access control that matches will be used
@@ -40,6 +48,9 @@ security:
     - { path: ^/api/program-requirements/types, roles: PUBLIC_ACCESS }
     - { path: ^/api/program-requirements/program, roles: PUBLIC_ACCESS }
     - { path: ^/api/public/parameters, roles: PUBLIC_ACCESS }
+    - { path: ^/api/applications, roles: ROLE_USER }
+    - { path: ^/api/profile, roles: ROLE_USER }
+    - { path: ^/api/preferences, roles: ROLE_USER }
     - { path: ^/api, roles: ROLE_USER }
 
 when@test:

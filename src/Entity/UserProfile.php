@@ -50,6 +50,81 @@ class UserProfile
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $passportNumber = null;
 
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $passportExpirationDate = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $cinNumber = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $email = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $gender = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $maritalStatus = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $countryOfBirth = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $cityOfBirth = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $alternateEmail = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $religion = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $nativeLanguage = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $chineseName = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $wechatId = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $skypeNo = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $emergencyContactName = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $emergencyContactGender = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $emergencyContactRelationship = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $emergencyContactPhone = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $emergencyContactEmail = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $emergencyContactAddress = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $hasWorkExperience = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $workCompany = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $workPosition = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $workStartDate = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $workEndDate = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $workDescription = null;
+
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $address = null;
 
@@ -88,6 +163,15 @@ class UserProfile
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $onboardingProgress = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $step2Validated = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $step4Validated = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $step5Validated = null;
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $preferredDestinations = null;
@@ -400,6 +484,39 @@ class UserProfile
         return $this;
     }
 
+    public function getStep2Validated(): ?bool
+    {
+        return $this->step2Validated;
+    }
+
+    public function setStep2Validated(?bool $step2Validated): self
+    {
+        $this->step2Validated = $step2Validated;
+        return $this;
+    }
+
+    public function getStep4Validated(): ?bool
+    {
+        return $this->step4Validated;
+    }
+
+    public function setStep4Validated(?bool $step4Validated): self
+    {
+        $this->step4Validated = $step4Validated;
+        return $this;
+    }
+
+    public function getStep5Validated(): ?bool
+    {
+        return $this->step5Validated;
+    }
+
+    public function setStep5Validated(?bool $step5Validated): self
+    {
+        $this->step5Validated = $step5Validated;
+        return $this;
+    }
+
     public function getPreferredDestinations(): ?array
     {
         return $this->preferredDestinations;
@@ -560,6 +677,281 @@ class UserProfile
                 $shortlist->setUserProfile(null);
             }
         }
+        return $this;
+    }
+
+    public function getPassportExpirationDate(): ?\DateTimeInterface
+    {
+        return $this->passportExpirationDate;
+    }
+
+    public function setPassportExpirationDate(?\DateTimeInterface $passportExpirationDate): self
+    {
+        $this->passportExpirationDate = $passportExpirationDate;
+        return $this;
+    }
+
+    public function getCinNumber(): ?string
+    {
+        return $this->cinNumber;
+    }
+
+    public function setCinNumber(?string $cinNumber): self
+    {
+        $this->cinNumber = $cinNumber;
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): self
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getGender(): ?string
+    {
+        return $this->gender;
+    }
+
+    public function setGender(?string $gender): self
+    {
+        $this->gender = $gender;
+        return $this;
+    }
+
+    public function getMaritalStatus(): ?string
+    {
+        return $this->maritalStatus;
+    }
+
+    public function setMaritalStatus(?string $maritalStatus): self
+    {
+        $this->maritalStatus = $maritalStatus;
+        return $this;
+    }
+
+    public function getCountryOfBirth(): ?string
+    {
+        return $this->countryOfBirth;
+    }
+
+    public function setCountryOfBirth(?string $countryOfBirth): self
+    {
+        $this->countryOfBirth = $countryOfBirth;
+        return $this;
+    }
+
+    public function getCityOfBirth(): ?string
+    {
+        return $this->cityOfBirth;
+    }
+
+    public function setCityOfBirth(?string $cityOfBirth): self
+    {
+        $this->cityOfBirth = $cityOfBirth;
+        return $this;
+    }
+
+    public function getAlternateEmail(): ?string
+    {
+        return $this->alternateEmail;
+    }
+
+    public function setAlternateEmail(?string $alternateEmail): self
+    {
+        $this->alternateEmail = $alternateEmail;
+        return $this;
+    }
+
+    public function getReligion(): ?string
+    {
+        return $this->religion;
+    }
+
+    public function setReligion(?string $religion): self
+    {
+        $this->religion = $religion;
+        return $this;
+    }
+
+    public function getNativeLanguage(): ?string
+    {
+        return $this->nativeLanguage;
+    }
+
+    public function setNativeLanguage(?string $nativeLanguage): self
+    {
+        $this->nativeLanguage = $nativeLanguage;
+        return $this;
+    }
+
+    public function getChineseName(): ?string
+    {
+        return $this->chineseName;
+    }
+
+    public function setChineseName(?string $chineseName): self
+    {
+        $this->chineseName = $chineseName;
+        return $this;
+    }
+
+    public function getWechatId(): ?string
+    {
+        return $this->wechatId;
+    }
+
+    public function setWechatId(?string $wechatId): self
+    {
+        $this->wechatId = $wechatId;
+        return $this;
+    }
+
+    public function getSkypeNo(): ?string
+    {
+        return $this->skypeNo;
+    }
+
+    public function setSkypeNo(?string $skypeNo): self
+    {
+        $this->skypeNo = $skypeNo;
+        return $this;
+    }
+
+    public function getEmergencyContactName(): ?string
+    {
+        return $this->emergencyContactName;
+    }
+
+    public function setEmergencyContactName(?string $emergencyContactName): self
+    {
+        $this->emergencyContactName = $emergencyContactName;
+        return $this;
+    }
+
+    public function getEmergencyContactGender(): ?string
+    {
+        return $this->emergencyContactGender;
+    }
+
+    public function setEmergencyContactGender(?string $emergencyContactGender): self
+    {
+        $this->emergencyContactGender = $emergencyContactGender;
+        return $this;
+    }
+
+    public function getEmergencyContactRelationship(): ?string
+    {
+        return $this->emergencyContactRelationship;
+    }
+
+    public function setEmergencyContactRelationship(?string $emergencyContactRelationship): self
+    {
+        $this->emergencyContactRelationship = $emergencyContactRelationship;
+        return $this;
+    }
+
+    public function getEmergencyContactPhone(): ?string
+    {
+        return $this->emergencyContactPhone;
+    }
+
+    public function setEmergencyContactPhone(?string $emergencyContactPhone): self
+    {
+        $this->emergencyContactPhone = $emergencyContactPhone;
+        return $this;
+    }
+
+    public function getEmergencyContactEmail(): ?string
+    {
+        return $this->emergencyContactEmail;
+    }
+
+    public function setEmergencyContactEmail(?string $emergencyContactEmail): self
+    {
+        $this->emergencyContactEmail = $emergencyContactEmail;
+        return $this;
+    }
+
+    public function getEmergencyContactAddress(): ?string
+    {
+        return $this->emergencyContactAddress;
+    }
+
+    public function setEmergencyContactAddress(?string $emergencyContactAddress): self
+    {
+        $this->emergencyContactAddress = $emergencyContactAddress;
+        return $this;
+    }
+
+    public function getHasWorkExperience(): ?bool
+    {
+        return $this->hasWorkExperience;
+    }
+
+    public function setHasWorkExperience(?bool $hasWorkExperience): self
+    {
+        $this->hasWorkExperience = $hasWorkExperience;
+        return $this;
+    }
+
+    public function getWorkCompany(): ?string
+    {
+        return $this->workCompany;
+    }
+
+    public function setWorkCompany(?string $workCompany): self
+    {
+        $this->workCompany = $workCompany;
+        return $this;
+    }
+
+    public function getWorkPosition(): ?string
+    {
+        return $this->workPosition;
+    }
+
+    public function setWorkPosition(?string $workPosition): self
+    {
+        $this->workPosition = $workPosition;
+        return $this;
+    }
+
+    public function getWorkStartDate(): ?\DateTimeInterface
+    {
+        return $this->workStartDate;
+    }
+
+    public function setWorkStartDate(?\DateTimeInterface $workStartDate): self
+    {
+        $this->workStartDate = $workStartDate;
+        return $this;
+    }
+
+    public function getWorkEndDate(): ?\DateTimeInterface
+    {
+        return $this->workEndDate;
+    }
+
+    public function setWorkEndDate(?\DateTimeInterface $workEndDate): self
+    {
+        $this->workEndDate = $workEndDate;
+        return $this;
+    }
+
+    public function getWorkDescription(): ?string
+    {
+        return $this->workDescription;
+    }
+
+    public function setWorkDescription(?string $workDescription): self
+    {
+        $this->workDescription = $workDescription;
         return $this;
     }
 }

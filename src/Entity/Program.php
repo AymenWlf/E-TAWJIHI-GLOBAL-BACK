@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProgramRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProgramRepository::class)]
 #[ORM\Table(name: 'programs')]
@@ -13,9 +14,11 @@ class Program
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['application:list', 'application:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['application:list', 'application:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -25,9 +28,11 @@ class Program
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $description = null;
 
     #[ORM\Column(name: 'description_fr', type: Types::TEXT, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $descriptionFr = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
@@ -38,6 +43,7 @@ class Program
 
     #[ORM\ManyToOne(targetEntity: Establishment::class, inversedBy: 'programsList')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['application:list', 'application:read'])]
     private ?Establishment $establishment = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -107,18 +113,23 @@ class Program
     private ?int $ranking = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $studyType = null; // on-campus, online, hybrid
 
     #[ORM\Column(length: 10, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $universityType = null; // A, B, C
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $subject = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?array $field = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $studyLevel = null; // undergraduate, graduate, doctoral
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
@@ -223,6 +234,7 @@ class Program
     private ?array $servicePricing = null;
 
     #[ORM\Column(name: 'program_type', length: 10, nullable: true)]
+    #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $programType = null;
 
     public function __construct()

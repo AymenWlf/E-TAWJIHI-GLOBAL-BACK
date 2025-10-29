@@ -3,74 +3,78 @@
 namespace App\Entity;
 
 use App\Repository\ApplicationRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ApplicationRepository::class)]
 #[ORM\Table(name: 'applications')]
 class Application
 {
-    public const STATUS_DRAFT = 'draft';
-    public const STATUS_SUBMITTED = 'submitted';
-    public const STATUS_UNDER_REVIEW = 'under_review';
-    public const STATUS_ACCEPTED = 'accepted';
-    public const STATUS_REJECTED = 'rejected';
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['application:read', 'application:list'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['application:read', 'application:list'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Program::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['application:read', 'application:list'])]
     private ?Program $program = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?User $agent = null;
-
     #[ORM\Column(length: 50)]
-    private ?string $status = self::STATUS_DRAFT;
+    #[Groups(['application:read', 'application:list'])]
+    private ?string $status = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['application:read', 'application:list'])]
+    private ?int $agentId = null;
 
     #[ORM\Column]
+    #[Groups(['application:read', 'application:list'])]
     private ?int $currentStep = 1;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2)]
+    #[Groups(['application:read', 'application:list'])]
     private ?string $progressPercentage = '0.00';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['application:read'])]
     private ?string $notes = null;
 
-    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[ORM\Column(type: Types::JSON)]
+    #[Groups(['application:read'])]
     private ?array $applicationData = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?array $submittedData = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updatedAt = null;
+    #[ORM\Column]
+    #[Groups(['application:read', 'application:list'])]
+    private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $submittedAt = null;
+    #[ORM\Column]
+    #[Groups(['application:read', 'application:list'])]
+    private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'application', targetEntity: ApplicationStep::class, cascade: ['persist', 'remove'])]
-    private Collection $steps;
-
-    #[ORM\OneToMany(mappedBy: 'application', targetEntity: ApplicationDocument::class, cascade: ['persist', 'remove'])]
-    private Collection $documents;
+    #[ORM\Column(nullable: true)]
+    #[Groups(['application:read', 'application:list'])]
+    private ?\DateTimeImmutable $submittedAt = null;
 
     public function __construct()
     {
-        $this->steps = new ArrayCollection();
-        $this->documents = new ArrayCollection();
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
+        $this->status = 'draft';
+        $this->currentStep = 1;
+        $this->progressPercentage = '0.00';
+        $this->applicationData = [];
     }
 
     public function getId(): ?int
@@ -100,17 +104,6 @@ class Application
         return $this;
     }
 
-    public function getAgent(): ?User
-    {
-        return $this->agent;
-    }
-
-    public function setAgent(?User $agent): static
-    {
-        $this->agent = $agent;
-        return $this;
-    }
-
     public function getStatus(): ?string
     {
         return $this->status;
@@ -119,6 +112,17 @@ class Application
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getAgentId(): ?int
+    {
+        return $this->agentId;
+    }
+
+    public function setAgentId(?int $agentId): static
+    {
+        $this->agentId = $agentId;
         return $this;
     }
 
@@ -166,106 +170,53 @@ class Application
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getSubmittedData(): ?array
+    {
+        return $this->submittedData;
+    }
+
+    public function setSubmittedData(?array $submittedData): static
+    {
+        $this->submittedData = $submittedData;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
         return $this;
     }
 
-    public function getSubmittedAt(): ?\DateTimeInterface
+    public function getSubmittedAt(): ?\DateTimeImmutable
     {
         return $this->submittedAt;
     }
 
-    public function setSubmittedAt(?\DateTimeInterface $submittedAt): static
+    public function setSubmittedAt(?\DateTimeImmutable $submittedAt): static
     {
         $this->submittedAt = $submittedAt;
         return $this;
     }
 
-    /**
-     * @return Collection<int, ApplicationStep>
-     */
-    public function getSteps(): Collection
+    public function updateTimestamp(): static
     {
-        return $this->steps;
-    }
-
-    public function addStep(ApplicationStep $step): static
-    {
-        if (!$this->steps->contains($step)) {
-            $this->steps->add($step);
-            $step->setApplication($this);
-        }
+        $this->updatedAt = new \DateTimeImmutable();
         return $this;
-    }
-
-    public function removeStep(ApplicationStep $step): static
-    {
-        if ($this->steps->removeElement($step)) {
-            if ($step->getApplication() === $this) {
-                $step->setApplication(null);
-            }
-        }
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, ApplicationDocument>
-     */
-    public function getDocuments(): Collection
-    {
-        return $this->documents;
-    }
-
-    public function addDocument(ApplicationDocument $document): static
-    {
-        if (!$this->documents->contains($document)) {
-            $this->documents->add($document);
-            $document->setApplication($this);
-        }
-        return $this;
-    }
-
-    public function removeDocument(ApplicationDocument $document): static
-    {
-        if ($this->documents->removeElement($document)) {
-            if ($document->getApplication() === $this) {
-                $document->setApplication(null);
-            }
-        }
-        return $this;
-    }
-
-    public function isDraft(): bool
-    {
-        return $this->status === self::STATUS_DRAFT;
-    }
-
-    public function isSubmitted(): bool
-    {
-        return $this->status === self::STATUS_SUBMITTED;
-    }
-
-    public function canBeSubmitted(): bool
-    {
-        return $this->status === self::STATUS_DRAFT &&
-            $this->progressPercentage >= 100;
     }
 }
