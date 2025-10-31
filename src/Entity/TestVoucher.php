@@ -26,10 +26,10 @@ class TestVoucher
     private ?string $vendorLogo = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $originalPrice = null;
+    private ?string $originalPrice = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $discountedPrice = null;
+    private ?string $discountedPrice = null;
 
     #[ORM\Column(type: 'string', length: 3)]
     private ?string $currency = null;

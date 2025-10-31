@@ -96,9 +96,17 @@ class ApplicationService
         $application = new Application();
         $application->setUser($user);
         $application->setProgram($program);
-        $application->setStatus(Application::STATUS_DRAFT);
+        $application->setStatus('draft');
         $application->setCurrentStep(1);
         $application->setProgressPercentage('0.00');
+
+        // Set is_china based on program's establishment country
+        $isChina = $this->isChinaApplication($program);
+        $application->setIsChina($isChina);
+
+        // Set is_france based on program's establishment country
+        $isFrance = $this->isFranceApplication($program);
+        $application->setIsFrance($isFrance);
 
         $this->entityManager->persist($application);
 
@@ -134,7 +142,7 @@ class ApplicationService
         }
 
         $step->setStepData($stepData);
-        $step->setUpdatedAt(new \DateTime());
+        $step->setUpdatedAt(new \DateTimeImmutable());
 
         // Validate step completion
         $this->validateStepCompletion($step);
@@ -223,7 +231,7 @@ class ApplicationService
             $application->setCurrentStep(count(self::APPLICATION_STEPS));
         }
 
-        $application->setUpdatedAt(new \DateTime());
+        $application->setUpdatedAt(new \DateTimeImmutable());
     }
 
     public function assignAgent(Application $application, ?User $agent = null, ?string $agentCode = null): AgentAssignment
@@ -252,8 +260,8 @@ class ApplicationService
         $this->entityManager->persist($assignment);
 
         // Update application with agent
-        $application->setAgent($agent);
-        $application->setUpdatedAt(new \DateTime());
+        $application->setAgentId($agent->getId());
+        $application->setUpdatedAt(new \DateTimeImmutable());
 
         $this->entityManager->flush();
 
@@ -312,9 +320,9 @@ class ApplicationService
             throw new \Exception('Application cannot be submitted. Please complete all required steps.');
         }
 
-        $application->setStatus(Application::STATUS_SUBMITTED);
-        $application->setSubmittedAt(new \DateTime());
-        $application->setUpdatedAt(new \DateTime());
+        $application->setStatus('submitted');
+        $application->setSubmittedAt(new \DateTimeImmutable());
+        $application->setUpdatedAt(new \DateTimeImmutable());
 
         $this->entityManager->flush();
 
@@ -346,5 +354,83 @@ class ApplicationService
     public function getAllStepConfigurations(): array
     {
         return self::APPLICATION_STEPS;
+    }
+
+    /**
+     * Check if the application is for China based on program's establishment country
+     */
+    private function isChinaApplication(Program $program): bool
+    {
+        $establishment = $program->getEstablishment();
+        if (!$establishment) {
+            return false;
+        }
+
+        $country = $establishment->getCountry();
+        if (!$country) {
+            return false;
+        }
+
+        // Check if country is China (case insensitive)
+        return strtolower(trim($country)) === 'china' ||
+            strtolower(trim($country)) === 'chinese' ||
+            strtolower(trim($country)) === 'cn';
+    }
+
+    /**
+     * Check if the application is for France based on program's establishment country
+     */
+    private function isFranceApplication(Program $program): bool
+    {
+        $establishment = $program->getEstablishment();
+        if (!$establishment) {
+            return false;
+        }
+
+        $country = $establishment->getCountry();
+        if (!$country) {
+            return false;
+        }
+
+        // Check if country is France (case insensitive)
+        return strtolower(trim($country)) === 'france' ||
+            strtolower(trim($country)) === 'french' ||
+            strtolower(trim($country)) === 'fr';
+    }
+
+    /**
+     * Update China-specific fields for an application
+     */
+    public function updateChinaFields(Application $application, array $chinaData): Application
+    {
+        if (!$application->getIsChina()) {
+            throw new \Exception('This application is not for China');
+        }
+
+        if (isset($chinaData['passportNumber'])) {
+            $application->setPassportNumber($chinaData['passportNumber']);
+        }
+
+        if (isset($chinaData['passportIssueDate'])) {
+            $application->setPassportIssueDate($chinaData['passportIssueDate']);
+        }
+
+        if (isset($chinaData['passportExpirationDate'])) {
+            $application->setPassportExpirationDate($chinaData['passportExpirationDate']);
+        }
+
+        if (isset($chinaData['religion'])) {
+            $application->setReligion($chinaData['religion']);
+        }
+
+        if (isset($chinaData['familyMembers'])) {
+            $application->setFamilyMembers($chinaData['familyMembers']);
+        }
+
+
+        $application->setUpdatedAt(new \DateTimeImmutable());
+        $this->entityManager->flush();
+
+        return $application;
     }
 }

@@ -294,6 +294,8 @@ class ProfileController extends AbstractController
                 'englishScore' => $qualification->getEnglishScore(),
                 'academicQualification' => $qualification->getAcademicQualification(),
                 'exactQualificationName' => $qualification->getExactQualificationName(),
+                'baccalaureateStream' => $qualification->getBaccalaureateStream(),
+                'baccalaureateStreamOther' => $qualification->getBaccalaureateStreamOther(),
                 'startDate' => $qualification->getStartDate()?->format('Y-m-d'),
                 'endDate' => $qualification->getEndDate()?->format('Y-m-d'),
                 'expiryDate' => $qualification->getExpiryDate()?->format('Y-m-d'),
@@ -337,6 +339,8 @@ class ProfileController extends AbstractController
         $qualification->setEnglishScore($data['englishScore'] ?? null);
         $qualification->setAcademicQualification($data['academicQualification'] ?? null);
         $qualification->setExactQualificationName($data['exactQualificationName'] ?? null);
+        $qualification->setBaccalaureateStream($data['baccalaureateStream'] ?? null);
+        $qualification->setBaccalaureateStreamOther($data['baccalaureateStreamOther'] ?? null);
         $qualification->setStartDate(array_key_exists('startDate', $data) && $data['startDate'] ? new \DateTime($data['startDate']) : null);
         $qualification->setEndDate(array_key_exists('endDate', $data) && $data['endDate'] ? new \DateTime($data['endDate']) : null);
         $qualification->setExpiryDate(array_key_exists('expiryDate', $data) && $data['expiryDate'] ? new \DateTime($data['expiryDate']) : null);
@@ -438,6 +442,12 @@ class ProfileController extends AbstractController
         }
         if (isset($data['exactQualificationName'])) {
             $qualification->setExactQualificationName($data['exactQualificationName']);
+        }
+        if (isset($data['baccalaureateStream'])) {
+            $qualification->setBaccalaureateStream($data['baccalaureateStream']);
+        }
+        if (isset($data['baccalaureateStreamOther'])) {
+            $qualification->setBaccalaureateStreamOther($data['baccalaureateStreamOther']);
         }
         if (array_key_exists('startDate', $data)) {
             $qualification->setStartDate($data['startDate'] ? new \DateTime($data['startDate']) : null);
@@ -703,7 +713,79 @@ class ProfileController extends AbstractController
             $document->setUserProfile($userProfile);
             $document->setType($type);
             $document->setCategory($category);
-            $document->setTitle($title);
+
+            // If originalLanguage is missing, infer default from user's applications (China -> English, France -> French)
+            if (!$originalLanguage) {
+                $applications = $this->entityManager->getRepository(Application::class)->findBy(['user' => $user]);
+                $hasChinaApplication = false;
+                $hasFranceApplication = false;
+                foreach ($applications as $app) {
+                    if (method_exists($app, 'getIsChina') && $app->getIsChina()) { $hasChinaApplication = true; }
+                    if (method_exists($app, 'getIsFrance') && $app->getIsFrance()) { $hasFranceApplication = true; }
+                }
+                if ($hasChinaApplication) {
+                    $originalLanguage = 'English';
+                } elseif ($hasFranceApplication) {
+                    $originalLanguage = 'French';
+                }
+            }
+
+            // Canonicalize title regardless of UI language
+            $canonicalMap = [
+                'passport' => ['Passeport', 'Passport'],
+                'nationalId' => ['Carte Nationale', 'National ID', 'National ID Card'],
+                'cv' => ['CV', 'Curriculum Vitae', 'Resume'],
+                'guardian1NationalId' => ['Carte Nationale du Tuteur 1', 'Guardian 1 National ID', 'Guardian 1 ID', 'Guardian ID 1', 'Guardian National ID 1', 'Carte Nationale Tuteur 1'],
+                'generalTranscript' => ['Relevé de Notes', 'General Transcript', 'Transcript', 'Academic Transcript'],
+                'baccalaureate' => ['Baccalauréat', 'Baccalaureate Diploma', 'Baccalaureate'],
+                'motivationLetter' => ['Lettre de Motivation', 'Motivation Letter'],
+                'recommendationLetter1' => ['Lettre de Recommandation 1', 'Recommendation Letter 1'],
+                'medicalHealthCheck' => ['Certificat Médical de Santé', 'Medical Health Check'],
+                'anthropometricRecord' => ['Fiche Anthropométrique (Bonne Conduite)', 'Anthropometric Record', 'Good Conduct'],
+                'frenchTest' => ['Certificat de Test de Français', 'French Test Certificate']
+            ];
+            $canonicalLabels = [
+                // Fixed canonical display labels (in English for consistency)
+                'passport' => 'Passport',
+                'nationalId' => 'National ID Card',
+                'cv' => 'Curriculum Vitae (CV)',
+                'guardian1NationalId' => 'Guardian 1 National ID',
+                'generalTranscript' => 'General Transcript',
+                'baccalaureate' => 'Baccalaureate Diploma',
+                'motivationLetter' => 'Motivation Letter',
+                'recommendationLetter1' => 'Recommendation Letter 1',
+                'medicalHealthCheck' => 'Medical Health Check',
+                'anthropometricRecord' => 'Anthropometric Record (Good Conduct)',
+                'frenchTest' => 'French Test Certificate'
+            ];
+            $normalize = function(string $s): string {
+                $s = mb_strtolower($s, 'UTF-8');
+                $s = str_replace(['é','è','ê','ë','à','â','ä','ù','û','ü','ô','ö','î','ï','ç'], ['e','e','e','e','a','a','a','u','u','u','o','o','i','i','c'], $s);
+                return $s;
+            };
+            $inferKeyFromTitle = function(?string $inputTitle) use ($canonicalMap, $normalize): ?string {
+                if (!$inputTitle) return null;
+                $normInput = $normalize($inputTitle);
+                foreach ($canonicalMap as $key => $alts) {
+                    foreach ($alts as $alt) {
+                        if ($normInput === $normalize($alt)) return $key;
+                    }
+                }
+                foreach ($canonicalMap as $key => $alts) {
+                    foreach ($alts as $alt) {
+                        if (strpos($normInput, $normalize($alt)) !== false) return $key;
+                    }
+                }
+                return null;
+            };
+            // Prefer using provided $type as hint when possible
+            $inferredKey = $inferKeyFromTitle($title);
+            if (!$inferredKey && isset($canonicalMap[$type])) {
+                $inferredKey = $type;
+            }
+            $canonicalTitle = $inferredKey ?: $title;
+
+            $document->setTitle($canonicalTitle);
             $document->setFilename($fileName);
             $document->setOriginalFilename($originalName);
             $document->setMimeType($mimeType);
@@ -1467,13 +1549,42 @@ class ProfileController extends AbstractController
         // Get user documents via userProfile
         $documents = $this->entityManager->getRepository(Document::class)->findBy(['userProfile' => $userProfile]);
 
-        // Required documents mapping (only truly required documents)
+        // Check if user has China or France applications
+        $applications = $this->entityManager->getRepository(Application::class)->findBy(['user' => $user]);
+        $hasChinaApplication = false;
+        $hasFranceApplication = false;
+
+        foreach ($applications as $application) {
+            if ($application->getIsChina()) {
+                $hasChinaApplication = true;
+            }
+            if ($application->getIsFrance()) {
+                $hasFranceApplication = true;
+            }
+        }
+
+        // Base required documents (always required)
         $requiredDocuments = [
             'passport' => 'Passeport',
             'nationalId' => 'Carte Nationale',
+            'cv' => 'CV',
+            'guardian1NationalId' => 'Carte Nationale du Tuteur 1',
+            'generalTranscript' => 'Relevé de Notes',
+            'baccalaureate' => 'Baccalauréat',
             'motivationLetter' => 'Lettre de Motivation',
             'recommendationLetter1' => 'Lettre de Recommandation 1'
         ];
+
+        // Add China-specific required documents
+        if ($hasChinaApplication) {
+            $requiredDocuments['medicalHealthCheck'] = 'Certificat Médical de Santé';
+            $requiredDocuments['anthropometricRecord'] = 'Fiche Anthropométrique (Bonne Conduite)';
+        }
+
+        // Add France-specific required documents
+        if ($hasFranceApplication && !$hasChinaApplication) {
+            $requiredDocuments['frenchTest'] = 'Certificat de Test de Français';
+        }
 
         $validationResult = [
             'isValid' => true,
@@ -1481,15 +1592,61 @@ class ProfileController extends AbstractController
             'documentsStatus' => []
         ];
 
-        // Check each required document
-        foreach ($requiredDocuments as $key => $title) {
-            $document = null;
+        // --- Ajout d'un mapping multilingue et fonction de recherche ---
+        $titleAlternatives = [
+            'passport' => ['Passeport', 'Passport'],
+            'nationalId' => ['Carte Nationale', 'National ID', 'National ID Card'],
+            'cv' => ['CV', 'Curriculum Vitae', 'Resume'],
+            'guardian1NationalId' => ['Carte Nationale du Tuteur 1', 'Guardian 1 National ID', 'Guardian 1 ID', 'Guardian ID 1', 'Guardian National ID 1'],
+            'generalTranscript' => ['Relevé de Notes', 'General Transcript', 'Transcript', 'Academic Transcript'],
+            'baccalaureate' => ['Baccalauréat', 'Baccalaureate Diploma', 'Baccalaureate'],
+            'motivationLetter' => ['Lettre de Motivation', 'Motivation Letter'],
+            'recommendationLetter1' => ['Lettre de Recommandation 1', 'Recommendation Letter 1'],
+            'medicalHealthCheck' => ['Certificat Médical de Santé', 'Medical Health Check'],
+            'anthropometricRecord' => ['Fiche Anthropométrique (Bonne Conduite)', 'Anthropometric Record', 'Good Conduct'],
+            'frenchTest' => ['Certificat de Test de Français', 'French Test Certificate']
+        ];
+        $normalize = function(string $s): string {
+            $s = mb_strtolower($s, 'UTF-8');
+            $s = str_replace([
+                'é','è','ê','ë','à','â','ä','ù','û','ü','ô','ö','î','ï','ç'
+            ], [
+                'e','e','e','e','a','a','a','u','u','u','o','o','i','i','c'
+            ], $s);
+            return $s;
+        };
+        $findDocument = function(array $documents, array $alternatives, $normalize) {
+            // Exact match
             foreach ($documents as $doc) {
-                if ($doc->getTitle() === $title) {
-                    $document = $doc;
-                    break;
+                $docNorm = $normalize($doc->getTitle());
+                foreach ($alternatives as $alt) {
+                    if ($docNorm === $normalize($alt)) return $doc;
                 }
             }
+            // Contains match
+            foreach ($documents as $doc) {
+                $docNorm = $normalize($doc->getTitle());
+                foreach ($alternatives as $alt) {
+                    if (strpos($docNorm, $normalize($alt)) !== false) return $doc;
+                }
+            }
+            return null;
+        };
+        // Remplacement du matching par le mapping multilingue
+        foreach ($requiredDocuments as $key => $title) {
+            $document = null;
+            
+            $alternatives = $titleAlternatives[$key] ?? [$title];
+            // inclure la clé canonique elle-même comme alternative exacte
+            array_unshift($alternatives, $key);
+            $document = $findDocument($documents, $alternatives, $normalize);
+
+            // Log for debugging
+            error_log("Checking document: $key -> $title");
+            error_log("Available documents: " . json_encode(array_map(function ($d) {
+                return $d->getTitle();
+            }, $documents)));
+            error_log("Document found: " . ($document ? 'YES' : 'NO'));
 
             if ($document) {
                 $validationResult['documentsStatus'][$key] = [
@@ -1509,6 +1666,87 @@ class ProfileController extends AbstractController
         }
 
         return new JsonResponse($validationResult);
+    }
+
+    #[Route('/documents/normalize-titles', name: 'normalize_document_titles', methods: ['POST'])]
+    public function normalizeDocumentTitles(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $userProfile = $user->getProfile();
+        if (!$userProfile) {
+            return new JsonResponse(['error' => 'User profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $documents = $this->entityManager->getRepository(Document::class)->findBy(['userProfile' => $userProfile]);
+
+        $canonicalMap = [
+            'passport' => ['Passeport', 'Passport'],
+            'nationalId' => ['Carte Nationale', 'National ID', 'National ID Card'],
+            'cv' => ['CV', 'Curriculum Vitae', 'Resume'],
+            'guardian1NationalId' => ['Carte Nationale du Tuteur 1', 'Guardian 1 National ID', 'Guardian 1 ID', 'Guardian ID 1', 'Guardian National ID 1', 'Carte Nationale Tuteur 1'],
+            'generalTranscript' => ['Relevé de Notes', 'General Transcript', 'Transcript', 'Academic Transcript'],
+            'baccalaureate' => ['Baccalauréat', 'Baccalaureate Diploma', 'Baccalaureate'],
+            'motivationLetter' => ['Lettre de Motivation', 'Motivation Letter'],
+            'recommendationLetter1' => ['Lettre de Recommandation 1', 'Recommendation Letter 1'],
+            'medicalHealthCheck' => ['Certificat Médical de Santé', 'Medical Health Check'],
+            'anthropometricRecord' => ['Fiche Anthropométrique (Bonne Conduite)', 'Anthropometric Record', 'Good Conduct'],
+            'frenchTest' => ['Certificat de Test de Français', 'French Test Certificate']
+        ];
+        $canonicalLabels = [
+            'passport' => 'Passport',
+            'nationalId' => 'National ID Card',
+            'cv' => 'Curriculum Vitae (CV)',
+            'guardian1NationalId' => 'Guardian 1 National ID',
+            'generalTranscript' => 'General Transcript',
+            'baccalaureate' => 'Baccalaureate Diploma',
+            'motivationLetter' => 'Motivation Letter',
+            'recommendationLetter1' => 'Recommendation Letter 1',
+            'medicalHealthCheck' => 'Medical Health Check',
+            'anthropometricRecord' => 'Anthropometric Record (Good Conduct)',
+            'frenchTest' => 'French Test Certificate'
+        ];
+        $normalize = function(string $s): string {
+            $s = mb_strtolower($s, 'UTF-8');
+            $s = str_replace(['é','è','ê','ë','à','â','ä','ù','û','ü','ô','ö','î','ï','ç'], ['e','e','e','e','a','a','a','u','u','u','o','o','i','i','c'], $s);
+            return $s;
+        };
+        $guessKey = function(string $title) use ($canonicalMap, $normalize): ?string {
+            $t = $normalize($title);
+            foreach ($canonicalMap as $key => $alts) {
+                foreach ($alts as $alt) {
+                    if ($t === $normalize($alt)) return $key;
+                }
+            }
+            foreach ($canonicalMap as $key => $alts) {
+                foreach ($alts as $alt) {
+                    if (strpos($t, $normalize($alt)) !== false) return $key;
+                }
+            }
+            return null;
+        };
+
+        $updated = 0;
+        foreach ($documents as $doc) {
+            $key = $guessKey($doc->getTitle() ?? '');
+            if ($key) {
+                if ($doc->getTitle() !== $key) {
+                    $doc->setTitle($key);
+                    $updated++;
+                }
+            }
+        }
+        if ($updated > 0) {
+            $this->entityManager->flush();
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'updated' => $updated
+        ]);
     }
 
     private function createDefaultProfile(User $user): UserProfile

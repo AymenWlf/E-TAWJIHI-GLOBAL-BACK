@@ -26,7 +26,7 @@ class Service
     private ?string $descriptionFr = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $price = null;
+    private ?string $price = null;
 
     #[ORM\Column(type: 'string', length: 3)]
     private ?string $currency = null;

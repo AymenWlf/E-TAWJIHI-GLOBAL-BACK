@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ProgramRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -34,6 +36,9 @@ class Program
     #[ORM\Column(name: 'description_fr', type: Types::TEXT, nullable: true)]
     #[Groups(['program:read', 'program:list', 'admin:read', 'admin:list'])]
     private ?string $descriptionFr = null;
+
+    #[ORM\OneToMany(mappedBy: 'program', targetEntity: ProgramRequirement::class, cascade: ['persist', 'remove'])]
+    private Collection $requirements;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $curriculum = null;
@@ -241,6 +246,34 @@ class Program
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->requirements = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection<int, ProgramRequirement>
+     */
+    public function getRequirements(): Collection
+    {
+        return $this->requirements;
+    }
+
+    public function addRequirement(ProgramRequirement $requirement): self
+    {
+        if (!$this->requirements->contains($requirement)) {
+            $this->requirements->add($requirement);
+            $requirement->setProgram($this);
+        }
+        return $this;
+    }
+
+    public function removeRequirement(ProgramRequirement $requirement): self
+    {
+        if ($this->requirements->removeElement($requirement)) {
+            if ($requirement->getProgram() === $this) {
+                $requirement->setProgram(null);
+            }
+        }
+        return $this;
     }
 
     public function getId(): ?int

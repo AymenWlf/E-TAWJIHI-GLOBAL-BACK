@@ -27,6 +27,10 @@ class Shortlist
     #[ORM\JoinColumn(nullable: true)]
     private ?Establishment $establishment = null;
 
+    #[ORM\ManyToOne(targetEntity: UserProfile::class, inversedBy: 'shortlist')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?UserProfile $userProfile = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -96,6 +100,17 @@ class Shortlist
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function getUserProfile(): ?UserProfile
+    {
+        return $this->userProfile;
+    }
+
+    public function setUserProfile(?UserProfile $userProfile): static
+    {
+        $this->userProfile = $userProfile;
         return $this;
     }
 }

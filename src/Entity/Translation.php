@@ -37,10 +37,10 @@ class Translation
     private ?int $numberOfPages = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $pricePerPage = null;
+    private ?string $pricePerPage = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $totalPrice = null;
+    private ?string $totalPrice = null;
 
     #[ORM\Column(type: 'string', length: 10)]
     private ?string $currency = null;
@@ -160,23 +160,23 @@ class Translation
         return $this;
     }
 
-    public function getPricePerPage(): ?float
+    public function getPricePerPage(): ?string
     {
         return $this->pricePerPage;
     }
 
-    public function setPricePerPage(float $pricePerPage): self
+    public function setPricePerPage(string $pricePerPage): self
     {
         $this->pricePerPage = $pricePerPage;
         return $this;
     }
 
-    public function getTotalPrice(): ?float
+    public function getTotalPrice(): ?string
     {
         return $this->totalPrice;
     }
 
-    public function setTotalPrice(float $totalPrice): self
+    public function setTotalPrice(string $totalPrice): self
     {
         $this->totalPrice = $totalPrice;
         return $this;

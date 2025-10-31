@@ -7,6 +7,9 @@ use App\Entity\Program;
 use App\Entity\User;
 use App\Repository\ApplicationRepository;
 use App\Repository\ProgramRepository;
+use App\Service\ApplicationService;
+use App\Repository\FinalStepRepository;
+use App\Repository\UserFinalStepStatusRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,7 +26,10 @@ class ApplicationController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ApplicationRepository $applicationRepository,
         private ProgramRepository $programRepository,
-        private SerializerInterface $serializer
+        private SerializerInterface $serializer,
+        private ApplicationService $applicationService,
+        private FinalStepRepository $finalStepRepository,
+        private UserFinalStepStatusRepository $userFinalStepStatusRepository
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -90,6 +96,17 @@ class ApplicationController extends AbstractController
         $application = new Application();
         $application->setUser($user);
         $application->setProgram($program);
+
+        // Auto-set country-specific flags based on program establishment
+        $establishment = $program->getEstablishment();
+        $country = $establishment ? ($establishment->getCountry() ?? '') : '';
+        $normalized = strtolower(trim($country));
+        if (in_array($normalized, ['france', 'fr'])) {
+            $application->setIsFrance(true);
+        }
+        if (in_array($normalized, ['china', 'cn', 'chine'])) {
+            $application->setIsChina(true);
+        }
 
         // Set language from request or user preference
         $requestData = json_decode($request->getContent(), true);
@@ -182,6 +199,31 @@ class ApplicationController extends AbstractController
             $applicationData['language'] = $requestData['language'];
         }
 
+        // Update China-specific fields if application is for China
+        if ($application->getIsChina() && isset($requestData['chinaFields'])) {
+            $chinaFields = $requestData['chinaFields'];
+
+            if (isset($chinaFields['passportNumber'])) {
+                $application->setPassportNumber($chinaFields['passportNumber']);
+            }
+
+            if (isset($chinaFields['passportIssueDate'])) {
+                $application->setPassportIssueDate($chinaFields['passportIssueDate']);
+            }
+
+            if (isset($chinaFields['passportExpirationDate'])) {
+                $application->setPassportExpirationDate($chinaFields['passportExpirationDate']);
+            }
+
+            if (isset($chinaFields['religion'])) {
+                $application->setReligion($chinaFields['religion']);
+            }
+
+            if (isset($chinaFields['familyMembers'])) {
+                $application->setFamilyMembers($chinaFields['familyMembers']);
+            }
+        }
+
         // Update application data
         $application->setApplicationData($applicationData);
 
@@ -201,6 +243,24 @@ class ApplicationController extends AbstractController
 
                 $application->setSubmittedData($submittedData);
                 $application->setSubmittedAt(new \DateTimeImmutable());
+
+                // Initialize user final step statuses for this application
+                $finalSteps = $this->finalStepRepository->findActiveOrdered();
+                foreach ($finalSteps as $step) {
+                    $existing = $this->userFinalStepStatusRepository->findOneBy([
+                        'user' => $user,
+                        'finalStep' => $step,
+                        'application' => $application
+                    ]);
+                    if (!$existing) {
+                        $ufs = new \App\Entity\UserFinalStepStatus();
+                        $ufs->setUser($user);
+                        $ufs->setApplication($application);
+                        $ufs->setFinalStep($step);
+                        $ufs->setStatus('in_progress');
+                        $this->entityManager->persist($ufs);
+                    }
+                }
             }
         }
 
@@ -211,6 +271,45 @@ class ApplicationController extends AbstractController
             'success' => true,
             'data' => json_decode($this->serializer->serialize($application, 'json', ['groups' => ['application:read']]), true)
         ]);
+    }
+
+    #[Route('/{id}/china-fields', name: 'update_china_fields', methods: ['PUT'])]
+    public function updateChinaFields(int $id, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $application = $this->applicationRepository->findByIdAndUser($id, $user);
+
+        if (!$application) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Application not found'
+            ], 404);
+        }
+
+        if (!$application->getIsChina()) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'This application is not for China'
+            ], 400);
+        }
+
+        $requestData = json_decode($request->getContent(), true);
+
+        try {
+            $application = $this->applicationService->updateChinaFields($application, $requestData);
+
+            return new JsonResponse([
+                'success' => true,
+                'data' => json_decode($this->serializer->serialize($application, 'json', ['groups' => ['application:read']]), true)
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]

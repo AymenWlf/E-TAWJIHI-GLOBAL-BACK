@@ -153,7 +153,7 @@ class UserProfile
     private ?string $preferredCurrency = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $annualBudget = null;
+    private ?string $annualBudget = null;
 
     #[ORM\Column(type: 'boolean', nullable: true)]
     private ?bool $scholarshipRequired = null;
@@ -440,12 +440,12 @@ class UserProfile
         return $this;
     }
 
-    public function getAnnualBudget(): ?float
+    public function getAnnualBudget(): ?string
     {
         return $this->annualBudget;
     }
 
-    public function setAnnualBudget(?float $annualBudget): self
+    public function setAnnualBudget(?string $annualBudget): self
     {
         $this->annualBudget = $annualBudget;
         return $this;

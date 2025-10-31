@@ -22,6 +22,10 @@ class UserFinalStepStatus
     #[ORM\JoinColumn(nullable: false)]
     private ?FinalStep $finalStep = null;
 
+    #[ORM\ManyToOne(targetEntity: Application::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Application $application = null;
+
     #[ORM\Column(type: 'string', length: 50)]
     private ?string $status = null; // 'pending', 'in_progress', 'completed', 'rejected'
 
@@ -66,6 +70,17 @@ class UserFinalStepStatus
     public function setFinalStep(?FinalStep $finalStep): self
     {
         $this->finalStep = $finalStep;
+        return $this;
+    }
+
+    public function getApplication(): ?Application
+    {
+        return $this->application;
+    }
+
+    public function setApplication(?Application $application): self
+    {
+        $this->application = $application;
         return $this;
     }
 

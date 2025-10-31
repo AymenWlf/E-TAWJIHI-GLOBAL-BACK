@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\QualificationRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: QualificationRepository::class)]
 #[ORM\Table(name: 'qualifications')]
@@ -69,6 +70,15 @@ class Qualification
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $exactQualificationName = null;
+
+    // Baccalaureate specific fields
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    #[Groups(['qualification:read', 'qualification:write'])]
+    private ?string $baccalaureateStream = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['qualification:read', 'qualification:write'])]
+    private ?string $baccalaureateStreamOther = null;
 
     #[ORM\Column(type: 'date', nullable: true)]
     private ?\DateTimeInterface $expiryDate = null;
@@ -319,6 +329,28 @@ class Qualification
     public function setExpiryDate(?\DateTimeInterface $expiryDate): self
     {
         $this->expiryDate = $expiryDate;
+        return $this;
+    }
+
+    public function getBaccalaureateStream(): ?string
+    {
+        return $this->baccalaureateStream;
+    }
+
+    public function setBaccalaureateStream(?string $baccalaureateStream): self
+    {
+        $this->baccalaureateStream = $baccalaureateStream;
+        return $this;
+    }
+
+    public function getBaccalaureateStreamOther(): ?string
+    {
+        return $this->baccalaureateStreamOther;
+    }
+
+    public function setBaccalaureateStreamOther(?string $baccalaureateStreamOther): self
+    {
+        $this->baccalaureateStreamOther = $baccalaureateStreamOther;
         return $this;
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ApplicationRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -26,6 +28,10 @@ class Application
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['application:read', 'application:list'])]
     private ?Program $program = null;
+
+    #[ORM\ManyToOne(targetEntity: UserProfile::class, inversedBy: 'applications')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?UserProfile $userProfile = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['application:read', 'application:list'])]
@@ -67,6 +73,45 @@ class Application
     #[Groups(['application:read', 'application:list'])]
     private ?\DateTimeImmutable $submittedAt = null;
 
+    // China-specific fields
+    #[ORM\Column(nullable: true)]
+    #[Groups(['application:read'])]
+    private ?bool $isChina = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['application:read'])]
+    private ?bool $isFrance = null;
+
+    // Passport fields for China
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?string $passportNumber = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?string $passportIssueDate = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?string $passportExpirationDate = null;
+
+    // Religion field
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?string $religion = null;
+
+    // Family members (JSON for father and mother)
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['application:read'])]
+    private ?array $familyMembers = null;
+
+    #[ORM\OneToMany(mappedBy: 'application', targetEntity: ApplicationDocument::class, cascade: ['persist', 'remove'])]
+    private Collection $documents;
+
+    #[ORM\OneToMany(mappedBy: 'application', targetEntity: ApplicationStep::class, cascade: ['persist', 'remove'])]
+    private Collection $steps;
+
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -75,6 +120,8 @@ class Application
         $this->currentStep = 1;
         $this->progressPercentage = '0.00';
         $this->applicationData = [];
+        $this->documents = new ArrayCollection();
+        $this->steps = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -101,6 +148,17 @@ class Application
     public function setProgram(?Program $program): static
     {
         $this->program = $program;
+        return $this;
+    }
+
+    public function getUserProfile(): ?UserProfile
+    {
+        return $this->userProfile;
+    }
+
+    public function setUserProfile(?UserProfile $userProfile): static
+    {
+        $this->userProfile = $userProfile;
         return $this;
     }
 
@@ -214,9 +272,148 @@ class Application
         return $this;
     }
 
+    /**
+     * @return Collection<int, ApplicationDocument>
+     */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
+    }
+
+    public function addDocument(ApplicationDocument $document): static
+    {
+        if (!$this->documents->contains($document)) {
+            $this->documents->add($document);
+            $document->setApplication($this);
+        }
+        return $this;
+    }
+
+    public function removeDocument(ApplicationDocument $document): static
+    {
+        if ($this->documents->removeElement($document)) {
+            if ($document->getApplication() === $this) {
+                $document->setApplication(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ApplicationStep>
+     */
+    public function getSteps(): Collection
+    {
+        return $this->steps;
+    }
+
+    public function addStep(ApplicationStep $step): static
+    {
+        if (!$this->steps->contains($step)) {
+            $this->steps->add($step);
+            $step->setApplication($this);
+        }
+        return $this;
+    }
+
+    public function removeStep(ApplicationStep $step): static
+    {
+        if ($this->steps->removeElement($step)) {
+            if ($step->getApplication() === $this) {
+                $step->setApplication(null);
+            }
+        }
+        return $this;
+    }
+
     public function updateTimestamp(): static
     {
         $this->updatedAt = new \DateTimeImmutable();
+        return $this;
+    }
+
+    public function canBeSubmitted(): bool
+    {
+        // Check if all required steps are completed
+        // This is a simplified version - you might want to add more complex validation
+        return $this->status === 'draft' && $this->currentStep >= 5;
+    }
+
+    // China-specific getters and setters
+    public function getIsChina(): ?bool
+    {
+        return $this->isChina;
+    }
+
+    public function setIsChina(?bool $isChina): static
+    {
+        $this->isChina = $isChina;
+        return $this;
+    }
+
+    public function getIsFrance(): ?bool
+    {
+        return $this->isFrance;
+    }
+
+    public function setIsFrance(?bool $isFrance): static
+    {
+        $this->isFrance = $isFrance;
+        return $this;
+    }
+
+    public function getPassportNumber(): ?string
+    {
+        return $this->passportNumber;
+    }
+
+    public function setPassportNumber(?string $passportNumber): static
+    {
+        $this->passportNumber = $passportNumber;
+        return $this;
+    }
+
+    public function getPassportIssueDate(): ?string
+    {
+        return $this->passportIssueDate;
+    }
+
+    public function setPassportIssueDate(?string $passportIssueDate): static
+    {
+        $this->passportIssueDate = $passportIssueDate;
+        return $this;
+    }
+
+    public function getPassportExpirationDate(): ?string
+    {
+        return $this->passportExpirationDate;
+    }
+
+    public function setPassportExpirationDate(?string $passportExpirationDate): static
+    {
+        $this->passportExpirationDate = $passportExpirationDate;
+        return $this;
+    }
+
+    public function getReligion(): ?string
+    {
+        return $this->religion;
+    }
+
+    public function setReligion(?string $religion): static
+    {
+        $this->religion = $religion;
+        return $this;
+    }
+
+    public function getFamilyMembers(): ?array
+    {
+        return $this->familyMembers;
+    }
+
+    public function setFamilyMembers(?array $familyMembers): static
+    {
+        $this->familyMembers = $familyMembers;
         return $this;
     }
 }
