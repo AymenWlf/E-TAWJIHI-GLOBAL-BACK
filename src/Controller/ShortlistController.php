@@ -8,6 +8,7 @@ use App\Entity\Establishment;
 use App\Repository\ShortlistRepository;
 use App\Repository\ProgramRepository;
 use App\Repository\EstablishmentRepository;
+use App\Repository\UserProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,7 +23,8 @@ class ShortlistController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ShortlistRepository $shortlistRepository,
         private ProgramRepository $programRepository,
-        private EstablishmentRepository $establishmentRepository
+        private EstablishmentRepository $establishmentRepository,
+        private UserProfileRepository $userProfileRepository
     ) {}
 
     #[Route('/toggle/program/{id}', name: 'shortlist_toggle_program', methods: ['POST'])]
@@ -36,6 +38,12 @@ class ShortlistController extends AbstractController
         $program = $this->programRepository->find($id);
         if (!$program) {
             return new JsonResponse(['error' => 'Program not found'], 404);
+        }
+
+        // Get or create user profile
+        $userProfile = $this->userProfileRepository->findOneBy(['user' => $user]);
+        if (!$userProfile) {
+            return new JsonResponse(['error' => 'User profile not found. Please complete your profile first.'], 404);
         }
 
         $existingShortlist = $this->shortlistRepository->findByUserAndProgram($user, $program);
@@ -54,6 +62,7 @@ class ShortlistController extends AbstractController
             // Add to shortlist
             $shortlist = new Shortlist();
             $shortlist->setUser($user);
+            $shortlist->setUserProfile($userProfile);
             $shortlist->setProgram($program);
 
             $this->entityManager->persist($shortlist);
@@ -80,6 +89,12 @@ class ShortlistController extends AbstractController
             return new JsonResponse(['error' => 'Establishment not found'], 404);
         }
 
+        // Get or create user profile
+        $userProfile = $this->userProfileRepository->findOneBy(['user' => $user]);
+        if (!$userProfile) {
+            return new JsonResponse(['error' => 'User profile not found. Please complete your profile first.'], 404);
+        }
+
         $existingShortlist = $this->shortlistRepository->findByUserAndEstablishment($user, $establishment);
 
         if ($existingShortlist) {
@@ -96,6 +111,7 @@ class ShortlistController extends AbstractController
             // Add to shortlist
             $shortlist = new Shortlist();
             $shortlist->setUser($user);
+            $shortlist->setUserProfile($userProfile);
             $shortlist->setEstablishment($establishment);
 
             $this->entityManager->persist($shortlist);

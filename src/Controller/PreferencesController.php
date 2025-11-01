@@ -80,6 +80,21 @@ class PreferencesController extends AbstractController
         if (isset($data['scholarshipRequired'])) {
             $preferences->setScholarshipRequired($data['scholarshipRequired']);
         }
+        if (isset($data['preferredTeachingLanguage'])) {
+            $preferences->setPreferredTeachingLanguage($data['preferredTeachingLanguage']);
+        }
+        if (isset($data['mainPriority'])) {
+            $preferences->setMainPriority($data['mainPriority']);
+        }
+        if (isset($data['scholarshipSearch'])) {
+            $preferences->setScholarshipSearch($data['scholarshipSearch']);
+        }
+        if (isset($data['englishTest'])) {
+            $preferences->setEnglishTest($data['englishTest']);
+        }
+        if (isset($data['frenchTest'])) {
+            $preferences->setFrenchTest($data['frenchTest']);
+        }
 
         $preferences->setUpdatedAt(new \DateTimeImmutable());
         $this->entityManager->flush();
@@ -100,6 +115,11 @@ class PreferencesController extends AbstractController
         $preferences->setPreferredCurrency('USD');
         $preferences->setAnnualBudget([]);
         $preferences->setScholarshipRequired(false);
+        $preferences->setPreferredTeachingLanguage('');
+        $preferences->setMainPriority('');
+        $preferences->setScholarshipSearch(false);
+        $preferences->setEnglishTest('none');
+        $preferences->setFrenchTest('none');
 
         $this->entityManager->persist($preferences);
         $this->entityManager->flush();
@@ -118,7 +138,12 @@ class PreferencesController extends AbstractController
             'preferredSubjects' => $preferences->getPreferredSubjects(),
             'preferredCurrency' => $preferences->getPreferredCurrency(),
             'annualBudget' => $preferences->getAnnualBudget(),
-            'scholarshipRequired' => $preferences->isScholarshipRequired(),
+            'scholarshipRequired' => $preferences->isScholarshipRequired() === true ? true : false,
+            'preferredTeachingLanguage' => $preferences->getPreferredTeachingLanguage(),
+            'mainPriority' => $preferences->getMainPriority(),
+            'scholarshipSearch' => $preferences->isScholarshipSearch() === true ? true : false,
+            'englishTest' => $preferences->getEnglishTest() ?: 'none',
+            'frenchTest' => $preferences->getFrenchTest() ?: 'none',
             'createdAt' => $preferences->getCreatedAt()->format('Y-m-d H:i:s'),
             'updatedAt' => $preferences->getUpdatedAt()->format('Y-m-d H:i:s'),
         ];

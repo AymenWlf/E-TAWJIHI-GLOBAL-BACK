@@ -42,6 +42,21 @@ class Preferences
     #[ORM\Column(type: 'boolean', nullable: true)]
     private ?bool $scholarshipRequired = null;
 
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $preferredTeachingLanguage = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $mainPriority = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $scholarshipSearch = null;
+
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    private ?string $englishTest = null; // 'none', 'has', 'planning'
+
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    private ?string $frenchTest = null; // 'none', 'has', 'planning'
+
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -186,5 +201,60 @@ class Preferences
             return $this->preferredDestinations[0];
         }
         return null;
+    }
+
+    public function getPreferredTeachingLanguage(): ?string
+    {
+        return $this->preferredTeachingLanguage;
+    }
+
+    public function setPreferredTeachingLanguage(?string $preferredTeachingLanguage): self
+    {
+        $this->preferredTeachingLanguage = $preferredTeachingLanguage;
+        return $this;
+    }
+
+    public function getMainPriority(): ?string
+    {
+        return $this->mainPriority;
+    }
+
+    public function setMainPriority(?string $mainPriority): self
+    {
+        $this->mainPriority = $mainPriority;
+        return $this;
+    }
+
+    public function isScholarshipSearch(): ?bool
+    {
+        return $this->scholarshipSearch;
+    }
+
+    public function setScholarshipSearch(?bool $scholarshipSearch): self
+    {
+        $this->scholarshipSearch = $scholarshipSearch;
+        return $this;
+    }
+
+    public function getEnglishTest(): ?string
+    {
+        return $this->englishTest;
+    }
+
+    public function setEnglishTest(?string $englishTest): self
+    {
+        $this->englishTest = $englishTest;
+        return $this;
+    }
+
+    public function getFrenchTest(): ?string
+    {
+        return $this->frenchTest;
+    }
+
+    public function setFrenchTest(?string $frenchTest): self
+    {
+        $this->frenchTest = $frenchTest;
+        return $this;
     }
 }

@@ -182,6 +182,10 @@ class UserProfile
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $preferredSubjects = null;
 
+    // China-specific fields
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $chinaFamilyMembers = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -952,6 +956,17 @@ class UserProfile
     public function setWorkDescription(?string $workDescription): self
     {
         $this->workDescription = $workDescription;
+        return $this;
+    }
+
+    public function getChinaFamilyMembers(): ?array
+    {
+        return $this->chinaFamilyMembers;
+    }
+
+    public function setChinaFamilyMembers(?array $chinaFamilyMembers): self
+    {
+        $this->chinaFamilyMembers = $chinaFamilyMembers;
         return $this;
     }
 }

@@ -9,15 +9,21 @@ use App\Entity\Application;
 use App\Entity\Shortlist;
 use App\Entity\Document;
 use App\Entity\DocumentTranslation;
+use App\Entity\Program;
+use App\Entity\Establishment;
 use App\Repository\ShortlistRepository;
 use App\Repository\UserRepository;
 use App\Repository\UserProfileRepository;
 use App\Repository\DocumentTranslationRepository;
+use App\Repository\ProgramRepository;
+use App\Repository\EstablishmentRepository;
+use App\Service\DocumentTitleService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -30,7 +36,11 @@ class ProfileController extends AbstractController
         private UserProfileRepository $userProfileRepository,
         private ShortlistRepository $shortlistRepository,
         private DocumentTranslationRepository $documentTranslationRepository,
-        private SerializerInterface $serializer
+        private SerializerInterface $serializer,
+        private DocumentTitleService $documentTitleService,
+        private UserPasswordHasherInterface $passwordHasher,
+        private ProgramRepository $programRepository,
+        private EstablishmentRepository $establishmentRepository
     ) {}
 
     #[Route('', name: 'get_profile', methods: ['GET'])]
@@ -95,6 +105,10 @@ class ProfileController extends AbstractController
             'annualBudget' => $profile->getAnnualBudget(),
             'scholarshipRequired' => $profile->isScholarshipRequired(),
             'languagePreferences' => $profile->getLanguagePreferences(),
+            'chinaFamilyMembers' => $profile->getChinaFamilyMembers() ?? [
+                'father' => ['name' => '', 'dateOfBirth' => '', 'occupation' => '', 'phone' => ''],
+                'mother' => ['name' => '', 'dateOfBirth' => '', 'occupation' => '', 'phone' => '']
+            ],
             'createdAt' => $profile->getCreatedAt()->format('Y-m-d H:i:s'),
             'updatedAt' => $profile->getUpdatedAt()->format('Y-m-d H:i:s'),
         ];
@@ -254,6 +268,30 @@ class ProfileController extends AbstractController
         }
         if (isset($data['languagePreferences'])) {
             $profile->setLanguagePreferences($data['languagePreferences']);
+        }
+        if (isset($data['chinaFamilyMembers'])) {
+            // Ensure proper structure
+            $chinaFamilyMembers = $data['chinaFamilyMembers'];
+            if (is_array($chinaFamilyMembers)) {
+                // Normalize structure to ensure all fields are present
+                $normalized = [
+                    'father' => [
+                        'name' => $chinaFamilyMembers['father']['name'] ?? '',
+                        'dateOfBirth' => $chinaFamilyMembers['father']['dateOfBirth'] ?? '',
+                        'occupation' => $chinaFamilyMembers['father']['occupation'] ?? '',
+                        'phone' => $chinaFamilyMembers['father']['phone'] ?? ''
+                    ],
+                    'mother' => [
+                        'name' => $chinaFamilyMembers['mother']['name'] ?? '',
+                        'dateOfBirth' => $chinaFamilyMembers['mother']['dateOfBirth'] ?? '',
+                        'occupation' => $chinaFamilyMembers['mother']['occupation'] ?? '',
+                        'phone' => $chinaFamilyMembers['mother']['phone'] ?? ''
+                    ]
+                ];
+                $profile->setChinaFamilyMembers($normalized);
+            } else {
+                $profile->setChinaFamilyMembers($chinaFamilyMembers);
+            }
         }
 
         $profile->setUpdatedAt(new \DateTimeImmutable());
@@ -521,11 +559,109 @@ class ProfileController extends AbstractController
     #[Route('/shortlist', name: 'get_shortlist', methods: ['GET'])]
     public function getShortlist(): JsonResponse
     {
-        // Shortlist functionality temporarily disabled
+        $user = $this->getUser();
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated'], 401);
+        }
+
+        $shortlistEntries = $this->shortlistRepository->findByUser($user);
+
+        $programs = [];
+        $establishments = [];
+
+        foreach ($shortlistEntries as $entry) {
+            if ($entry->getProgram()) {
+                $program = $entry->getProgram();
+                $programs[] = array_merge(
+                    $this->serializeProgram($program),
+                    ['shortlistedAt' => $entry->getCreatedAt()->format('Y-m-d\TH:i:s')]
+                );
+            }
+
+            if ($entry->getEstablishment()) {
+                $establishment = $entry->getEstablishment();
+                $establishments[] = array_merge(
+                    $this->serializeEstablishment($establishment),
+                    ['shortlistedAt' => $entry->getCreatedAt()->format('Y-m-d\TH:i:s')]
+                );
+            }
+        }
+
         return new JsonResponse([
-            'programs' => [],
-            'establishments' => []
+            'programs' => $programs,
+            'establishments' => $establishments
         ]);
+    }
+
+    private function serializeProgram(Program $program): array
+    {
+        $establishment = $program->getEstablishment();
+        
+        return [
+            'id' => $program->getId(),
+            'name' => $program->getName(),
+            'nameFr' => $program->getNameFr(),
+            'slug' => $program->getSlug(),
+            'degree' => $program->getDegree(),
+            'duration' => $program->getDuration(),
+            'durationUnit' => $program->getDurationUnit(),
+            'language' => $program->getLanguage(),
+            'tuition' => $program->getTuition(),
+            'tuitionAmount' => $program->getTuitionAmount(),
+            'tuitionCurrency' => $program->getTuitionCurrency(),
+            'studyType' => $program->getStudyType(),
+            'universityType' => $program->getUniversityType(),
+            'featured' => $program->isFeatured(),
+            'aidvisorRecommended' => $program->isAidvisorRecommended(),
+            'scholarships' => $program->isScholarships(),
+            'housing' => $program->isHousing(),
+            'establishmentRankings' => $establishment ? $establishment->getRankings() : null,
+            'multiIntakes' => $program->getMultiIntakes(),
+            'establishment' => $establishment ? [
+                'id' => $establishment->getId(),
+                'name' => $establishment->getName(),
+                'nameFr' => $establishment->getNameFr(),
+                'slug' => $establishment->getSlug(),
+                'logo' => $establishment->getLogo(),
+                'country' => $establishment->getCountry(),
+                'city' => $establishment->getCity(),
+                'type' => $establishment->getType(),
+                'rating' => $establishment->getRating(),
+                'worldRanking' => $establishment->getWorldRanking(),
+                'rankings' => $establishment->getRankings(),
+            ] : null,
+        ];
+    }
+
+    private function serializeEstablishment(Establishment $establishment): array
+    {
+        return [
+            'id' => $establishment->getId(),
+            'name' => $establishment->getName(),
+            'nameFr' => $establishment->getNameFr(),
+            'slug' => $establishment->getSlug(),
+            'logo' => $establishment->getLogo(),
+            'country' => $establishment->getCountry(),
+            'city' => $establishment->getCity(),
+            'type' => $establishment->getType(),
+            'rating' => $establishment->getRating(),
+            'students' => $establishment->getStudents(),
+            'programs' => $establishment->getPrograms(),
+            'tuitionRange' => $establishment->getTuitionRange(),
+            'acceptanceRate' => $establishment->getAcceptanceRate(),
+            'worldRanking' => $establishment->getWorldRanking(),
+            'rankings' => $establishment->getRankings(),
+            'scholarships' => $establishment->isScholarships(),
+            'scholarshipTypes' => $establishment->getScholarshipTypes(),
+            'housing' => $establishment->isHousing(),
+            'languages' => $establishment->getLanguages() ?? [],
+            'language' => $establishment->getLanguage(),
+            'featured' => $establishment->isFeatured(),
+            'sponsored' => $establishment->isSponsored(),
+            'aidvisorRecommended' => $establishment->isAidvisorRecommended(),
+            'universityType' => $establishment->getUniversityType(),
+            'multiIntakes' => $establishment->getMultiIntakes(),
+        ];
     }
 
     #[Route('/shortlist/programs/{programId}', name: 'add_program_to_shortlist', methods: ['POST'])]
@@ -572,11 +708,12 @@ class ProfileController extends AbstractController
 
         $documents = [];
         foreach ($userProfile->getDocuments() as $document) {
+            // Le title est maintenant la clé unique (ex: 'passport', 'nationalId')
             $documents[] = [
                 'id' => $document->getId(),
                 'type' => $document->getType(),
                 'category' => $document->getCategory(),
-                'title' => $document->getTitle(),
+                'title' => $document->getTitle(), // Clé unique de l'input
                 'filename' => $document->getFilename(),
                 'originalFilename' => $document->getOriginalFilename(),
                 'mimeType' => $document->getMimeType(),
@@ -640,9 +777,17 @@ class ProfileController extends AbstractController
         // Get document data from form
         $type = $request->request->get('type', 'personal');
         $category = $request->request->get('category', 'other');
-        $title = $request->request->get('title', '');
+        $docKey = $request->request->get('docKey', ''); // Clé unique de l'input (ex: 'passport', 'nationalId')
         $description = $request->request->get('description', '');
         $originalLanguage = $request->request->get('originalLanguage', '');
+        
+        // Le docKey est obligatoire - c'est l'identifiant unique de l'input
+        if (empty($docKey)) {
+            return new JsonResponse(['error' => 'Document key (docKey) is required'], 400);
+        }
+        
+        // Normaliser la clé pour garantir qu'elle soit en camelCase sans espaces
+        $docKey = $this->normalizeKey($docKey);
 
         // Validate file size (10MB max)
         $maxSize = 10 * 1024 * 1024; // 10MB
@@ -693,12 +838,12 @@ class ProfileController extends AbstractController
                 mkdir($uploadDir, 0755, true);
             }
 
-            // Generate unique filename with title + unique code
+            // Generate unique filename with docKey + unique code
             $originalName = $uploadedFile->getClientOriginalName();
             $extension = $uploadedFile->guessExtension() ?: pathinfo($originalName, PATHINFO_EXTENSION);
             $uniqueCode = uniqid('doc_', true);
-            $fileName = $title ?
-                preg_replace('/[^a-zA-Z0-9_-]/', '_', $title) . '_' . $uniqueCode . '.' . $extension :
+            $fileName = $docKey ? 
+                preg_replace('/[^a-zA-Z0-9_-]/', '_', $docKey) . '_' . $uniqueCode . '.' . $extension :
                 $uniqueCode . '.' . $extension;
 
             // Move file to upload directory
@@ -730,62 +875,9 @@ class ProfileController extends AbstractController
                 }
             }
 
-            // Canonicalize title regardless of UI language
-            $canonicalMap = [
-                'passport' => ['Passeport', 'Passport'],
-                'nationalId' => ['Carte Nationale', 'National ID', 'National ID Card'],
-                'cv' => ['CV', 'Curriculum Vitae', 'Resume'],
-                'guardian1NationalId' => ['Carte Nationale du Tuteur 1', 'Guardian 1 National ID', 'Guardian 1 ID', 'Guardian ID 1', 'Guardian National ID 1', 'Carte Nationale Tuteur 1'],
-                'generalTranscript' => ['Relevé de Notes', 'General Transcript', 'Transcript', 'Academic Transcript'],
-                'baccalaureate' => ['Baccalauréat', 'Baccalaureate Diploma', 'Baccalaureate'],
-                'motivationLetter' => ['Lettre de Motivation', 'Motivation Letter'],
-                'recommendationLetter1' => ['Lettre de Recommandation 1', 'Recommendation Letter 1'],
-                'medicalHealthCheck' => ['Certificat Médical de Santé', 'Medical Health Check'],
-                'anthropometricRecord' => ['Fiche Anthropométrique (Bonne Conduite)', 'Anthropometric Record', 'Good Conduct'],
-                'frenchTest' => ['Certificat de Test de Français', 'French Test Certificate']
-            ];
-            $canonicalLabels = [
-                // Fixed canonical display labels (in English for consistency)
-                'passport' => 'Passport',
-                'nationalId' => 'National ID Card',
-                'cv' => 'Curriculum Vitae (CV)',
-                'guardian1NationalId' => 'Guardian 1 National ID',
-                'generalTranscript' => 'General Transcript',
-                'baccalaureate' => 'Baccalaureate Diploma',
-                'motivationLetter' => 'Motivation Letter',
-                'recommendationLetter1' => 'Recommendation Letter 1',
-                'medicalHealthCheck' => 'Medical Health Check',
-                'anthropometricRecord' => 'Anthropometric Record (Good Conduct)',
-                'frenchTest' => 'French Test Certificate'
-            ];
-            $normalize = function(string $s): string {
-                $s = mb_strtolower($s, 'UTF-8');
-                $s = str_replace(['é','è','ê','ë','à','â','ä','ù','û','ü','ô','ö','î','ï','ç'], ['e','e','e','e','a','a','a','u','u','u','o','o','i','i','c'], $s);
-                return $s;
-            };
-            $inferKeyFromTitle = function(?string $inputTitle) use ($canonicalMap, $normalize): ?string {
-                if (!$inputTitle) return null;
-                $normInput = $normalize($inputTitle);
-                foreach ($canonicalMap as $key => $alts) {
-                    foreach ($alts as $alt) {
-                        if ($normInput === $normalize($alt)) return $key;
-                    }
-                }
-                foreach ($canonicalMap as $key => $alts) {
-                    foreach ($alts as $alt) {
-                        if (strpos($normInput, $normalize($alt)) !== false) return $key;
-                    }
-                }
-                return null;
-            };
-            // Prefer using provided $type as hint when possible
-            $inferredKey = $inferKeyFromTitle($title);
-            if (!$inferredKey && isset($canonicalMap[$type])) {
-                $inferredKey = $type;
-            }
-            $canonicalTitle = $inferredKey ?: $title;
-
-            $document->setTitle($canonicalTitle);
+            // Le title est maintenant la clé de l'input (docKey) directement
+            // C'est l'identifiant unique : pas de traduction stockée, on génère le titre à la volée selon la langue
+            $document->setTitle($docKey);
             $document->setFilename($fileName);
             $document->setOriginalFilename($originalName);
             $document->setMimeType($mimeType);
@@ -808,7 +900,7 @@ class ProfileController extends AbstractController
                     'id' => $document->getId(),
                     'type' => $document->getType(),
                     'category' => $document->getCategory(),
-                    'title' => $document->getTitle(),
+                    'title' => $document->getTitle(), // Clé unique (ex: 'passport', 'nationalId')
                     'filename' => $document->getFilename(),
                     'originalFilename' => $document->getOriginalFilename(),
                     'mimeType' => $document->getMimeType(),
@@ -855,8 +947,14 @@ class ProfileController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON data'], 400);
         }
 
-        if (isset($data['title'])) {
-            $document->setTitle($data['title']);
+        // Gérer docKey (ou title) - maintenant c'est la même chose
+        if (isset($data['docKey'])) {
+            $docKey = $this->normalizeKey($data['docKey']);
+            $document->setTitle($docKey);
+        } elseif (isset($data['title'])) {
+            // Si docKey n'est pas fourni, utiliser title et le normaliser
+            $docKey = $this->normalizeKey($data['title']);
+            $document->setTitle($docKey);
         }
         if (isset($data['description'])) {
             $document->setDescription($data['description']);
@@ -1582,7 +1680,7 @@ class ProfileController extends AbstractController
         }
 
         // Add France-specific required documents
-        if ($hasFranceApplication && !$hasChinaApplication) {
+        if ($hasFranceApplication) {
             $requiredDocuments['frenchTest'] = 'Certificat de Test de Français';
         }
 
@@ -1666,6 +1764,261 @@ class ProfileController extends AbstractController
         }
 
         return new JsonResponse($validationResult);
+    }
+
+    /**
+     * Normalise une clé pour garantir qu'elle soit en camelCase sans espaces
+     * Reconnaît aussi les variantes connues et les convertit vers les clés standard
+     */
+    private function normalizeKey(?string $key): ?string
+    {
+        if (!$key) {
+            return null;
+        }
+
+        $key = trim($key);
+        
+        // Mapping des variantes connues vers les clés standard
+        $variantToKeyMap = [
+            // Enrollment Certificate / Attestation de Scolarité
+            'attestationdescolarite' => 'enrollmentCertificate',
+            'attestation_de_scolarite' => 'enrollmentCertificate',
+            'attestation-de-scolarite' => 'enrollmentCertificate',
+            'attestationdescolarité' => 'enrollmentCertificate',
+            'attestation_de_scolarité' => 'enrollmentCertificate',
+            'enrollmentcertificate' => 'enrollmentCertificate',
+            'enrollment_certificate' => 'enrollmentCertificate',
+            'enrollment-certificate' => 'enrollmentCertificate',
+            
+            // Medical Health Check
+            'certificatmedicaldesante' => 'medicalHealthCheck',
+            'certificat_medical_de_sante' => 'medicalHealthCheck',
+            'certificat-medical-de-sante' => 'medicalHealthCheck',
+            'certificatmedicaldesanté' => 'medicalHealthCheck',
+            'certificat_médical_de_santé' => 'medicalHealthCheck',
+            'medicalhealthcheck' => 'medicalHealthCheck',
+            'medical_health_check' => 'medicalHealthCheck',
+            'medical-health-check' => 'medicalHealthCheck',
+            
+            // Anthropometric Record
+            'ficheanthropometrique' => 'anthropometricRecord',
+            'fiche_anthropometrique' => 'anthropometricRecord',
+            'fiche-anthropometrique' => 'anthropometricRecord',
+            'ficheanthropométrique' => 'anthropometricRecord',
+            'fiche_anthropométrique' => 'anthropometricRecord',
+            'anthropometricrecord' => 'anthropometricRecord',
+            'anthropometric_record' => 'anthropometricRecord',
+            'anthropometric-record' => 'anthropometricRecord',
+            'goodconduct' => 'anthropometricRecord',
+            'good_conduct' => 'anthropometricRecord',
+            'good-conduct' => 'anthropometricRecord',
+            'bonneconduite' => 'anthropometricRecord',
+            'bonne_conduite' => 'anthropometricRecord',
+            
+            // National ID
+            'nationalid' => 'nationalId',
+            'national_id' => 'nationalId',
+            'national-id' => 'nationalId',
+            'cartenationale' => 'nationalId',
+            'carte_nationale' => 'nationalId',
+            
+            // Guardian IDs
+            'guardian1nationalid' => 'guardian1NationalId',
+            'guardian1_national_id' => 'guardian1NationalId',
+            'guardian1nationalidcard' => 'guardian1NationalId',
+            'guardian2nationalid' => 'guardian2NationalId',
+            'guardian2_national_id' => 'guardian2NationalId',
+            'guardian2nationalidcard' => 'guardian2NationalId',
+            
+            // Transcripts
+            'generaltranscript' => 'generalTranscript',
+            'general_transcript' => 'generalTranscript',
+            'general-transcript' => 'generalTranscript',
+            'relevedenotes' => 'generalTranscript',
+            'releve_de_notes' => 'generalTranscript',
+            'transcript' => 'transcript',
+            
+            // Tests
+            'englishtest' => 'englishTest',
+            'english_test' => 'englishTest',
+            'english-test' => 'englishTest',
+            'frenchtest' => 'frenchTest',
+            'french_test' => 'frenchTest',
+            'french-test' => 'frenchTest',
+            
+            // Diplomas
+            'baccalaureate' => 'baccalaureate',
+            'baccalauréat' => 'baccalaureate',
+            'baccalaureatediploma' => 'baccalaureate',
+            'bac2diploma' => 'bac2',
+            'bac2' => 'bac2',
+            'bac3diploma' => 'bac3',
+            'bac3' => 'bac3',
+            'bac5diploma' => 'bac5',
+            'bac5' => 'bac5',
+            
+            // Letters
+            'recommendationletter1' => 'recommendationLetter1',
+            'recommendation_letter_1' => 'recommendationLetter1',
+            'recommendationletter2' => 'recommendationLetter2',
+            'recommendation_letter_2' => 'recommendationLetter2',
+            'motivationletter' => 'motivationLetter',
+            'motivation_letter' => 'motivationLetter',
+        ];
+        
+        // Normaliser la clé pour la comparaison (enlever accents, espaces, tout en minuscules)
+        $normalizedForComparison = mb_strtolower($key, 'UTF-8');
+        $normalizedForComparison = str_replace(
+            ['é', 'è', 'ê', 'ë', 'à', 'â', 'ä', 'ù', 'û', 'ü', 'ô', 'ö', 'î', 'ï', 'ç', ' ', '-', '_'],
+            ['e', 'e', 'e', 'e', 'a', 'a', 'a', 'u', 'u', 'u', 'o', 'o', 'i', 'i', 'c', '', '', ''],
+            $normalizedForComparison
+        );
+        
+        // Vérifier si c'est une variante connue
+        if (isset($variantToKeyMap[$normalizedForComparison])) {
+            return $variantToKeyMap[$normalizedForComparison];
+        }
+        
+        // Vérifier aussi avec matching partiel pour certaines variantes
+        foreach ($variantToKeyMap as $variant => $standardKey) {
+            if (strpos($normalizedForComparison, $variant) !== false || strpos($variant, $normalizedForComparison) !== false) {
+                return $standardKey;
+            }
+        }
+        
+        // Matching partiel spécialisé pour certaines variantes courantes
+        // Enrollment Certificate / Attestation de Scolarité
+        if (strpos($normalizedForComparison, 'attestation') !== false && 
+            (strpos($normalizedForComparison, 'scolarite') !== false || strpos($normalizedForComparison, 'school') !== false)) {
+            return 'enrollmentCertificate';
+        }
+        if (strpos($normalizedForComparison, 'enrollment') !== false && strpos($normalizedForComparison, 'certificate') !== false) {
+            return 'enrollmentCertificate';
+        }
+        
+        // Medical Health Check
+        if ((strpos($normalizedForComparison, 'certificat') !== false || strpos($normalizedForComparison, 'certificate') !== false) &&
+            (strpos($normalizedForComparison, 'medical') !== false || strpos($normalizedForComparison, 'sante') !== false || strpos($normalizedForComparison, 'health') !== false)) {
+            return 'medicalHealthCheck';
+        }
+        
+        // Anthropometric Record
+        if ((strpos($normalizedForComparison, 'fiche') !== false || strpos($normalizedForComparison, 'record') !== false) &&
+            (strpos($normalizedForComparison, 'anthropometrique') !== false || strpos($normalizedForComparison, 'anthropometric') !== false ||
+             strpos($normalizedForComparison, 'conduite') !== false || strpos($normalizedForComparison, 'conduct') !== false)) {
+            return 'anthropometricRecord';
+        }
+        
+        // Si la clé est déjà valide, la retourner telle quelle
+        if ($this->documentTitleService->isValidKey($key)) {
+            return $key;
+        }
+        
+        // Sinon, normaliser en camelCase
+        // Remplacer les espaces, tirets, underscores par un séparateur temporaire
+        $key = preg_replace('/[\s\-_]+/', '_', $key);
+        
+        // Diviser par le séparateur
+        $parts = explode('_', $key);
+        
+        if (empty($parts)) {
+            return null;
+        }
+        
+        // Premier mot en minuscules, les suivants avec première lettre en majuscule
+        $camelCase = mb_strtolower($parts[0], 'UTF-8');
+        for ($i = 1; $i < count($parts); $i++) {
+            if (!empty($parts[$i])) {
+                $camelCase .= ucfirst(mb_strtolower($parts[$i], 'UTF-8'));
+            }
+        }
+        
+        // Vérifier si la clé normalisée est valide
+        if ($this->documentTitleService->isValidKey($camelCase)) {
+            return $camelCase;
+        }
+        
+        return $camelCase;
+    }
+
+    #[Route('/change-password', name: 'change_password', methods: ['POST'])]
+    public function changePassword(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'User not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $language = $data['language'] ?? $user->getPreferredLanguage() ?? 'en';
+
+        // Messages selon la langue
+        $messages = [
+            'fr' => [
+                'user_not_found' => 'Utilisateur non trouvé',
+                'fields_required' => 'Le mot de passe actuel et le nouveau mot de passe sont requis',
+                'current_password_incorrect' => 'Le mot de passe actuel est incorrect',
+                'password_same' => 'Le nouveau mot de passe doit être différent du mot de passe actuel',
+                'password_too_short' => 'Le nouveau mot de passe doit contenir au moins 8 caractères',
+                'success' => 'Mot de passe modifié avec succès'
+            ],
+            'en' => [
+                'user_not_found' => 'User not found',
+                'fields_required' => 'Current password and new password are required',
+                'current_password_incorrect' => 'Current password is incorrect',
+                'password_same' => 'New password must be different from current password',
+                'password_too_short' => 'New password must be at least 8 characters long',
+                'success' => 'Password changed successfully'
+            ]
+        ];
+
+        $msg = $messages[$language] ?? $messages['en'];
+
+        if (!isset($data['currentPassword']) || !isset($data['newPassword'])) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $msg['fields_required']
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier que le mot de passe actuel est correct
+        if (!$this->passwordHasher->isPasswordValid($user, $data['currentPassword'])) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $msg['current_password_incorrect']
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que le nouveau mot de passe est différent de l'ancien
+        if ($this->passwordHasher->isPasswordValid($user, $data['newPassword'])) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $msg['password_same']
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Valider la longueur du nouveau mot de passe (minimum 8 caractères)
+        if (strlen($data['newPassword']) < 8) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $msg['password_too_short']
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Hasher et sauvegarder le nouveau mot de passe
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['newPassword']);
+        $user->setPassword($hashedPassword);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => $msg['success']
+        ]);
     }
 
     #[Route('/documents/normalize-titles', name: 'normalize_document_titles', methods: ['POST'])]

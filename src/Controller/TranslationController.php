@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Translation;
 use App\Entity\User;
 use App\Repository\TranslationRepository;
+use App\Repository\TranslationPriceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +24,7 @@ class TranslationController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private TranslationRepository $translationRepository,
+        private TranslationPriceRepository $translationPriceRepository,
         private SluggerInterface $slugger
     ) {}
 
@@ -41,6 +43,53 @@ class TranslationController extends AbstractController
             'success' => true,
             'data' => $data
         ]);
+    }
+
+    /**
+     * Get translation price by languages (public endpoint - no auth required for price lookup)
+     * This route must be defined BEFORE /{id} routes to avoid "price" being interpreted as an ID
+     */
+    #[Route('/price', name: 'get_price', methods: ['GET'], priority: 2)]
+    public function getTranslationPrice(Request $request): JsonResponse
+    {
+        $fromLanguage = trim($request->query->get('fromLanguage', ''));
+        $toLanguage = trim($request->query->get('toLanguage', ''));
+
+        if (empty($fromLanguage) || empty($toLanguage)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'fromLanguage and toLanguage parameters are required'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            // Find exact match (case-insensitive)
+            $translationPrice = $this->translationPriceRepository->findByLanguages($fromLanguage, $toLanguage);
+            
+            if (!$translationPrice) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Price not found for this language pair',
+                    'data' => null
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return new JsonResponse([
+                'success' => true,
+                'data' => [
+                    'fromLanguage' => $translationPrice->getFromLanguage(),
+                    'toLanguage' => $translationPrice->getToLanguage(),
+                    'price' => $translationPrice->getPrice(),
+                    'currency' => $translationPrice->getCurrency()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error retrieving translation price',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('', name: 'create', methods: ['POST'])]

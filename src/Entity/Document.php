@@ -26,8 +26,8 @@ class Document
     #[ORM\Column(type: 'string', length: 50)]
     private ?string $category = null; // 'identity', 'english_tests', 'academic_certificates', 'other'
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private ?string $title = null;
+    #[ORM\Column(type: 'string', length: 100)]
+    private ?string $title = null; // Clé unique de l'input (ex: 'passport', 'nationalId', etc.) - sert aussi d'identifiant
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $filename = null;

@@ -58,6 +58,12 @@ class Service
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $durationUnit = null;
 
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $promotionalPrice = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $images = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -237,6 +243,28 @@ class Service
     public function setDurationUnit(?string $durationUnit): self
     {
         $this->durationUnit = $durationUnit;
+        return $this;
+    }
+
+    public function getPromotionalPrice(): ?float
+    {
+        return $this->promotionalPrice ? (float) $this->promotionalPrice : null;
+    }
+
+    public function setPromotionalPrice(?float $promotionalPrice): self
+    {
+        $this->promotionalPrice = $promotionalPrice ? (string) $promotionalPrice : null;
+        return $this;
+    }
+
+    public function getImages(): ?array
+    {
+        return $this->images;
+    }
+
+    public function setImages(?array $images): self
+    {
+        $this->images = $images;
         return $this;
     }
 

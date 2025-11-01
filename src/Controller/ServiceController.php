@@ -31,8 +31,12 @@ class ServiceController extends AbstractController
             $user = $this->getUser();
             $userCountry = $user->getCountry();
             $userStudyCountry = $user->getPreferredCountry();
-            $userCurrency = $user->getPreferredCurrency() ?? 'USD';
-            $language = $request->query->get('language', 'en');
+            // Use currency parameter if provided, otherwise use user's preference
+            $requestedCurrency = $request->query->get('currency');
+            $userCurrency = $requestedCurrency ?: ($user->getPreferredCurrency() ?? 'USD');
+            $requestedLanguage = $request->query->get('language', 'en');
+            // Normalize language to 'fr' or 'en'
+            $language = (strtolower($requestedLanguage) === 'fr' || strtolower($requestedLanguage) === 'français') ? 'fr' : 'en';
 
             // Get all active services
             $services = $this->serviceRepository->findBy(['isActive' => true]);
@@ -44,6 +48,20 @@ class ServiceController extends AbstractController
 
                 // Convert price to user's preferred currency
                 $convertedPrice = $this->convertPrice($service->getPrice(), $service->getCurrency(), $userCurrency);
+                
+                // Convert promotional price if it exists
+                $convertedPromotionalPrice = null;
+                if ($service->getPromotionalPrice()) {
+                    $convertedPromotionalPrice = $this->convertPrice($service->getPromotionalPrice(), $service->getCurrency(), $userCurrency);
+                }
+
+                // Calculate discount amount and percentage
+                $discountAmount = null;
+                $discountPercentage = null;
+                if ($convertedPromotionalPrice && $convertedPromotionalPrice < $convertedPrice) {
+                    $discountAmount = $convertedPrice - $convertedPromotionalPrice;
+                    $discountPercentage = round(($discountAmount / $convertedPrice) * 100, 0);
+                }
 
                 $serviceData = [
                     'id' => $service->getId(),
@@ -51,6 +69,9 @@ class ServiceController extends AbstractController
                     'description' => $language === 'fr' ? $service->getDescriptionFr() : $service->getDescription(),
                     'price' => $convertedPrice,
                     'originalPrice' => $service->getPrice(),
+                    'promotionalPrice' => $convertedPromotionalPrice,
+                    'discountAmount' => $discountAmount,
+                    'discountPercentage' => $discountPercentage,
                     'currency' => $userCurrency,
                     'originalCurrency' => $service->getCurrency(),
                     'category' => $service->getCategory(),
@@ -60,6 +81,7 @@ class ServiceController extends AbstractController
                     'color' => $service->getColor(),
                     'duration' => $service->getDuration(),
                     'durationUnit' => $service->getDurationUnit(),
+                    'images' => $service->getImages() ?? [],
                     'isAvailable' => $isAvailable,
                     'availabilityMessage' => $this->getAvailabilityMessage($service, $userCountry, $userStudyCountry, $language)
                 ];
@@ -87,8 +109,12 @@ class ServiceController extends AbstractController
     {
         try {
             $user = $this->getUser();
-            $userCurrency = $user->getPreferredCurrency() ?? 'USD';
-            $language = $request->query->get('language', 'en');
+            // Use currency parameter if provided, otherwise use user's preference
+            $requestedCurrency = $request->query->get('currency');
+            $userCurrency = $requestedCurrency ?: ($user->getPreferredCurrency() ?? 'USD');
+            $requestedLanguage = $request->query->get('language', 'en');
+            // Normalize language to 'fr' or 'en'
+            $language = (strtolower($requestedLanguage) === 'fr' || strtolower($requestedLanguage) === 'français') ? 'fr' : 'en';
 
             $service = $this->serviceRepository->find($id);
             if (!$service) {
@@ -99,6 +125,21 @@ class ServiceController extends AbstractController
             }
 
             $convertedPrice = $this->convertPrice($service->getPrice(), $service->getCurrency(), $userCurrency);
+            
+            // Convert promotional price if it exists
+            $convertedPromotionalPrice = null;
+            if ($service->getPromotionalPrice()) {
+                $convertedPromotionalPrice = $this->convertPrice($service->getPromotionalPrice(), $service->getCurrency(), $userCurrency);
+            }
+
+            // Calculate discount amount and percentage
+            $discountAmount = null;
+            $discountPercentage = null;
+            if ($convertedPromotionalPrice && $convertedPromotionalPrice < $convertedPrice) {
+                $discountAmount = $convertedPrice - $convertedPromotionalPrice;
+                $discountPercentage = round(($discountAmount / $convertedPrice) * 100, 0);
+            }
+
             $isAvailable = $this->isServiceAvailableForUser($service, $user->getCountry(), $user->getPreferredCountry());
 
             $serviceData = [
@@ -107,6 +148,9 @@ class ServiceController extends AbstractController
                 'description' => $language === 'fr' ? $service->getDescriptionFr() : $service->getDescription(),
                 'price' => $convertedPrice,
                 'originalPrice' => $service->getPrice(),
+                'promotionalPrice' => $convertedPromotionalPrice,
+                'discountAmount' => $discountAmount,
+                'discountPercentage' => $discountPercentage,
                 'currency' => $userCurrency,
                 'originalCurrency' => $service->getCurrency(),
                 'category' => $service->getCategory(),
@@ -116,6 +160,7 @@ class ServiceController extends AbstractController
                 'color' => $service->getColor(),
                 'duration' => $service->getDuration(),
                 'durationUnit' => $service->getDurationUnit(),
+                'images' => $service->getImages() ?? [],
                 'isAvailable' => $isAvailable,
                 'availabilityMessage' => $this->getAvailabilityMessage($service, $user->getCountry(), $user->getPreferredCountry(), $language)
             ];
